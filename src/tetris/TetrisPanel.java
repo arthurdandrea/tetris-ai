@@ -281,7 +281,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {
          tetris.genetic.sendScore(lastscore);
          }*/
-        this.controller.flag = false;
+        this.controller.stop();
         this.controller = new TetrisAI(this.engine);
 
         this.engine.state = GameState.PLAYING;

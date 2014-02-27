@@ -3,6 +3,8 @@ package tetris.ai;
 import static tetris.ProjectConstants.sleep_;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import tetris.ProjectConstants;
 import tetris.generic.TetrisEngine;
 import tetris.generic.Tetromino;
@@ -13,7 +15,7 @@ public abstract class AbstractAI {
 
     public Thread thread;
 
-    public volatile boolean flag = false;
+    private volatile boolean flag = false;
 
     /*
      * Time (ms) AbstractAI has to wait per keypress.
@@ -42,7 +44,19 @@ public abstract class AbstractAI {
             }
 
             flag = true;
-            engine.lastnewblock = System.currentTimeMillis();
+        }
+    }
+    
+    public void stop() {
+        if (!this.flag) return;
+
+        this.flag = false;
+        if (Thread.currentThread() != this.thread) {
+            try {
+                this.thread.join();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(AbstractAI.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }
 
