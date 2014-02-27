@@ -202,7 +202,6 @@ public class TetrisEngine {
      * Current state of the game (PLAYING, PAUSED, etc.)
      */
     public volatile GameState state;
-    public long lastnewblock = System.currentTimeMillis();
 
     /*
      * Public constructor. Remember to call startengine() or else this won't do
@@ -579,8 +578,6 @@ public class TetrisEngine {
         blocksdropped += 1;
 
         listener.onNewBlock(this);
-
-        lastnewblock = System.currentTimeMillis();
     }
 
     /*

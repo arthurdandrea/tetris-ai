@@ -286,20 +286,12 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
 
         this.engine.state = GameState.PLAYING;
         this.anomaly_flag = false;
-        this.engine.lastnewblock = System.currentTimeMillis();
         this.controller.send_ready(lastScore);
     }
 
     @Override
     public void onNewBlock(TetrisEngine engine) {
         assert this.engine == engine;
-
-        if (!isHumanControlled
-                && System.currentTimeMillis() - this.engine.lastnewblock > (200 + 50 * AbstractAI.waittime)) {
-            System.out.println("Anomaly detected, retrying...");
-            anomaly_flag = true;
-            this.engine.gameover();
-        }
     }
 
     /*
