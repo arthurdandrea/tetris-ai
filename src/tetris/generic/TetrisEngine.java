@@ -142,7 +142,8 @@ public class TetrisEngine {
     /*
      * Random object used to generate new blocks.
      */
-    private Random rdm;
+    private final Random rdm;
+
     /*
      * Primitive representation of active block.
      */
