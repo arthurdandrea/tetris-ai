@@ -1,8 +1,8 @@
-package code;
+package tetris;
 
-import code.ProjectConstants.GameState;
-import static code.ProjectConstants.addLeadingZeroes;
-import static code.ProjectConstants.sleep_;
+import tetris.ProjectConstants.GameState;
+import static tetris.ProjectConstants.addLeadingZeroes;
+import static tetris.ProjectConstants.sleep_;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;

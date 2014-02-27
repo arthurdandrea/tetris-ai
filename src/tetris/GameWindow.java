@@ -1,6 +1,6 @@
-package code;
+package tetris;
 
-import static code.ProjectConstants.STARTFS;
+import static tetris.ProjectConstants.STARTFS;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.GraphicsDevice;

@@ -1,6 +1,6 @@
-package code;
+package tetris;
 
-import static code.ProjectConstants.sleep_;
+import static tetris.ProjectConstants.sleep_;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -185,7 +185,7 @@ public abstract class AbstractAI {
     }
     
     // List of all the possible fits.
-    protected List<BlockPosition> getPossibleFits(code.TetrisEngine ge, int type) {
+    protected List<BlockPosition> getPossibleFits(tetris.TetrisEngine ge, int type) {
         byte[][][] rotations = TetrisEngine.blockdef[type];
         int nrots = rotations.length;
         

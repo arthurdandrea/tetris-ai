@@ -1,4 +1,4 @@
-package code;
+package tetris;
 
 import java.util.List;
 

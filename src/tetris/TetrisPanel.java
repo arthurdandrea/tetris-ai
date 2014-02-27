@@ -1,8 +1,8 @@
-package code;
+package tetris;
 
-import code.ProjectConstants.GameState;
-import static code.ProjectConstants.getResURL;
-import static code.ProjectConstants.sleep_;
+import tetris.ProjectConstants.GameState;
+import static tetris.ProjectConstants.getResURL;
+import static tetris.ProjectConstants.sleep_;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyAdapter;

@@ -1,4 +1,4 @@
-package code;
+package tetris;
 
 //A single tuple for the function value
 class StateAction {

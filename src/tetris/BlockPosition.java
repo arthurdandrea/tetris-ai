@@ -1,4 +1,4 @@
-package code;
+package tetris;
 
 public class BlockPosition {
     byte bx;

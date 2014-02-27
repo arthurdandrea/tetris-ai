@@ -1,6 +1,6 @@
-package code;
+package tetris;
 
-import static code.ProjectConstants.formatStackTrace;
+import static tetris.ProjectConstants.formatStackTrace;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
