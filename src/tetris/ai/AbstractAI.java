@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import tetris.ProjectConstants;
 import tetris.generic.TetrisEngine;
-import tetris.TetrisPanel;
 import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {
 
-    protected TetrisPanel panel;
     protected TetrisEngine engine;
 
     public Thread thread;
@@ -28,10 +26,8 @@ public abstract class AbstractAI {
      */
     public static final boolean do_drop = true;
 
-    public AbstractAI(TetrisPanel panel) {
-        this.panel = panel;
-
-        engine = panel.engine;
+    public AbstractAI(TetrisEngine engine) {
+        this.engine = engine;
     }
 
     public void setThread(Thread thread) {

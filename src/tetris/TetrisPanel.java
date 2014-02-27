@@ -166,7 +166,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         engine.state = GameState.PAUSED;
 
         if (!isHumanControlled) {
-            controller = new TetrisAI(this);
+            controller = new TetrisAI(this.engine);
         }
     }
 
@@ -279,7 +279,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
          tetris.genetic.sendScore(lastscore);
          }*/
         this.controller.flag = false;
-        this.controller = new TetrisAI(this);
+        this.controller = new TetrisAI(this.engine);
 
         this.engine.state = GameState.PLAYING;
         this.anomaly_flag = false;

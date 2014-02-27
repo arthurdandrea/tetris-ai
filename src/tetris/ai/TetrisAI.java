@@ -2,7 +2,6 @@ package tetris.ai;
 
 import java.util.List;
 import tetris.generic.TetrisEngine;
-import tetris.TetrisPanel;
 
 /*
  * This is the default tetris playing AbstractAI. It holds a reference to the tetris
@@ -19,8 +18,8 @@ public class TetrisAI extends AbstractAI {
     public double _BLOCKADE = -0.59;
     public double _CLEAR = 1.6;
 
-    public TetrisAI(TetrisPanel panel) {
-        super(panel);
+    public TetrisAI(TetrisEngine engine) {
+        super(engine);
 
         setThread(new AIThread());
     }
