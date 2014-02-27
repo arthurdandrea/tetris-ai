@@ -135,10 +135,10 @@ public class TetrisEngine {
         }
     }};
 //</editor-fold>
-    /*
-     * Reference to the TetrisPanel containing this object;
-     */
-    TetrisPanel tetris;
+    
+
+    private TetrisEngineListener listener;
+    
     /*
      * Random object used to generate new blocks.
      */
@@ -210,13 +210,13 @@ public class TetrisEngine {
      */
     public int lastlines = 0;
     public long lastnewblock = System.currentTimeMillis();
-    boolean anomaly_flag = false;
 
     /*
      * Public constructor. Remember to call startengine() or else this won't do
      * anything! @param p TetrisPanel.
      */
-    public TetrisEngine(TetrisPanel p) {
+    public TetrisEngine(TetrisEngineListener listener) {
+        this.listener = listener;
         //Bounds changed to be thus:
 
         //Initialize a DBlock array and set all its contents
@@ -228,8 +228,6 @@ public class TetrisEngine {
             }
         }
 
-        //Initialize objects.
-        tetris = p;
         rdm = new Random();
 
         //Initialize game thread.
@@ -400,7 +398,7 @@ public class TetrisEngine {
     /*
      * Called when Game Over (Blocks stacked so high that copy() fails)
      */
-    private synchronized void gameover() {
+    public synchronized void gameover() {
         //Check first.
         if (state == GameState.GAMEOVER) {
             return;
@@ -413,10 +411,7 @@ public class TetrisEngine {
          //pause the game first.*/
         state = GameState.GAMEOVER;
 
-        if (!tetris.isHumanControlled) {
-            tetris.controller.flag = false;
-            lastlines = lines;
-        }
+        lastlines = lines;
 
         int lastscore = score;
 
@@ -424,18 +419,7 @@ public class TetrisEngine {
         reset();
         //sleep_(20);
 
-        if (!tetris.isHumanControlled) {
-            /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {
-             tetris.genetic.sendScore(lastscore);
-             }*/
-
-            tetris.controller = new TetrisAI(tetris);
-
-            state = GameState.PLAYING;
-            anomaly_flag = false;
-            lastnewblock = System.currentTimeMillis();
-            tetris.controller.send_ready(lastscore);
-        }
+        listener.onGameOver(this, lastscore);
 
         /*}
          }.start();*/
@@ -626,12 +610,7 @@ public class TetrisEngine {
         //Successfully dropped 1 block, here.
         blocksdropped += 1;
 
-        if (!tetris.isHumanControlled
-                && System.currentTimeMillis() - lastnewblock > (200 + 50 * AbstractAI.waittime)) {
-            System.out.println("Anomaly detected, retrying...");
-            anomaly_flag = true;
-            gameover();
-        }
+        listener.onNewBlock(this);
 
         lastnewblock = System.currentTimeMillis();
     }

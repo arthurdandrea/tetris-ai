@@ -21,13 +21,13 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import static tetris.ProjectConstants.addLeadingZeroes;
 import tetris.generic.Block;
+import tetris.generic.TetrisEngineListener;
 
 /*
  * TetrisPanel is the panel that contains the (main) panels AKA. core. This also
  * holds most of the objects needed to render the game on a JDesktopPane.
  */
-public class TetrisPanel extends JPanel {
-
+public class TetrisPanel extends JPanel implements TetrisEngineListener {
     //---------------BEGIN PUBLIC VARIABLES---------------//
     /*
      * Public reference to the TetrisEngine object.
@@ -62,7 +62,9 @@ public class TetrisPanel extends JPanel {
      * Dimensions of the squares of the next block as drawn. See squaredim.
      */
     public int nextblockdim = 18;
+    
     private Dimension bounds;
+    private boolean anomaly_flag = false;
 
     /*
      * Public TetrisPanel constructor.
@@ -266,6 +268,35 @@ public class TetrisPanel extends JPanel {
                     (this.getWidth() - g.getFontMetrics().stringWidth(pausestring)) / 2 + 50, 300);
         }
 
+    }
+
+    @Override
+    public void onGameOver(TetrisEngine engine, int lastScore) {
+        assert this.engine == engine;
+
+        if (this.isHumanControlled) { return; }
+        /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {
+         tetris.genetic.sendScore(lastscore);
+         }*/
+        this.controller.flag = false;
+        this.controller = new TetrisAI(this);
+
+        this.engine.state = GameState.PLAYING;
+        this.anomaly_flag = false;
+        this.engine.lastnewblock = System.currentTimeMillis();
+        this.controller.send_ready(lastScore);
+    }
+
+    @Override
+    public void onNewBlock(TetrisEngine engine) {
+        assert this.engine == engine;
+
+        if (!isHumanControlled
+                && System.currentTimeMillis() - this.engine.lastnewblock > (200 + 50 * AbstractAI.waittime)) {
+            System.out.println("Anomaly detected, retrying...");
+            anomaly_flag = true;
+            this.engine.gameover();
+        }
     }
 
     /*
