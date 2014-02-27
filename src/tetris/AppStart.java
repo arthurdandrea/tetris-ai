@@ -12,6 +12,7 @@ public class AppStart {
     /*
      * Errors go to console if true, otherwise go to GUI logger.
      */
+
     public static final boolean REPORT_TO_CONSOLE = true;
 
     public static void main(String... args) {

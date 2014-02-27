@@ -6,6 +6,7 @@ import java.awt.Color;
  * More concrete representation of a block.
  */
 public class Block implements Cloneable {
+
     public static final Color[] colors = {
         new Color(0, 0, 0, 220),
         new Color(0, 0, 0, 205),
@@ -19,8 +20,8 @@ public class Block implements Cloneable {
     /*
      * Color of an empty block.
      */
-    public static final Color emptycolor =
-            new Color(120, 120, 190, 90);
+    public static final Color emptycolor
+            = new Color(120, 120, 190, 90);
     /*
      * State of the block.
      */

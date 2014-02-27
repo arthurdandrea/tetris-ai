@@ -9,46 +9,47 @@ import tetris.TetrisPanel;
 import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {
+
     protected TetrisPanel panel;
     protected TetrisEngine engine;
-    
+
     public Thread thread;
-    
+
     public volatile boolean flag = false;
-    
+
     /*
      * Time (ms) AbstractAI has to wait per keypress.
      * (for maximum speed without crashing, set waittime = 1, do_drop on)
      */
     public static final int waittime = 10; //1 does crash...
-    
+
     /*
      * Do we use hard drops?
      */
     public static final boolean do_drop = true;
-    
+
     public AbstractAI(TetrisPanel panel) {
         this.panel = panel;
-        
+
         engine = panel.engine;
     }
-    
-    public void setThread(Thread thread){
+
+    public void setThread(Thread thread) {
         this.thread = thread;
     }
-    
+
     public void send_ready(int lastscore) {
         if (!flag) {
             //TODO Check if correct
-            if(!thread.isAlive()){
+            if (!thread.isAlive()) {
                 thread.start();
             }
-            
+
             flag = true;
             engine.lastnewblock = System.currentTimeMillis();
         }
     }
-    
+
     protected abstract BlockPosition computeBestFit(TetrisEngine engine);
 
     public byte[][] mockGrid(TetrisEngine ge) {
@@ -64,8 +65,9 @@ public abstract class AbstractAI {
         }
         return mockgrid;
     }
-    
+
     class AIThread extends Thread {
+
         @Override
         public void run() {
             while (flag) {
@@ -113,7 +115,7 @@ public abstract class AbstractAI {
                 return;
             } else {
                 prev_state = engine.activeblock.rot;
-            
+
             }
         }
         prev_state = engine.activeblock.x;
@@ -187,16 +189,14 @@ public abstract class AbstractAI {
 
         return lfree * 10 + rfree;
     }
-    
+
     // List of all the possible fits.
-
-
     protected List<BlockPosition> getPossibleFits(tetris.generic.TetrisEngine ge, Tetromino.Type type) {
         byte[][][] rotations = TetrisEngine.blockdef[type.ordinal()];
         int nrots = rotations.length;
-        
+
         List<BlockPosition> posfits = new ArrayList<BlockPosition>();
-        
+
         for (int i = 0; i < nrots; i++) {
             byte[][] trotation = rotations[i];
             int free = freeSpaces(trotation);
@@ -212,7 +212,7 @@ public abstract class AbstractAI {
                 posfits.add(put);
             }
         }
-        
+
         return posfits;
     }
 }

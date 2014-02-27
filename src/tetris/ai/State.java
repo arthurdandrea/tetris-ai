@@ -3,8 +3,9 @@ package tetris.ai;
 import java.util.BitSet;
 
 public class State {
+
     BitSet bs;
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

@@ -18,7 +18,7 @@ public class TetrisEngine {
     /*
      * Bunch of hardcoded blocks and their rotations. Code them high up in the
      * array so that when you get a new one it appears in the highest spot 
-	 * possible.
+     * possible.
      */
     //<editor-fold defaultstate="collapsed" desc="blockdef">
     public static final byte[][][][] blockdef = {{
@@ -33,107 +33,107 @@ public class TetrisEngine {
             {0, 1, 0, 0},
             {0, 1, 0, 0},
             {0, 1, 0, 0}}},
-        // 1 = O block
+    // 1 = O block
+    {
         {
-            {
-                {0, 1, 1, 0},
-                {0, 1, 1, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}}},
-        // 2 = L block
+            {0, 1, 1, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}}},
+    // 2 = L block
+    {
         {
-            {
-                {0, 1, 0, 0},
-                {0, 1, 0, 0},
-                {0, 1, 1, 0},
-                {0, 0, 0, 0}},
-            {
-                {0, 0, 1, 0},
-                {1, 1, 1, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {1, 1, 0, 0},
-                {0, 1, 0, 0},
-                {0, 1, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {1, 1, 1, 0},
-                {1, 0, 0, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}}},
-        // 3 = J block
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0}},
         {
-            {
-                {0, 0, 1, 0},
-                {0, 0, 1, 0},
-                {0, 1, 1, 0},
-                {0, 0, 0, 0}},
-            {
-                {1, 1, 1, 0},
-                {0, 0, 1, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {0, 1, 1, 0},
-                {0, 1, 0, 0},
-                {0, 1, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {1, 0, 0, 0},
-                {1, 1, 1, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}}},
-        // 4 = T block
+            {0, 0, 1, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
         {
-            {
-                {0, 1, 0, 0},
-                {1, 1, 1, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {0, 1, 0, 0},
-                {0, 1, 1, 0},
-                {0, 1, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {1, 1, 1, 0},
-                {0, 1, 0, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {0, 1, 0, 0},
-                {1, 1, 0, 0},
-                {0, 1, 0, 0},
-                {0, 0, 0, 0}}
-        },
-        // 5 = S block
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}},
         {
-            {
-                {0, 1, 1, 0},
-                {1, 1, 0, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {0, 1, 0, 0},
-                {0, 1, 1, 0},
-                {0, 0, 1, 0},
-                {0, 0, 0, 0}}
-        },
-        // 6 = Z block
+            {1, 1, 1, 0},
+            {1, 0, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}}},
+    // 3 = J block
+    {
         {
-            {
-                {0, 1, 1, 0},
-                {0, 0, 1, 1},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {0, 0, 1, 0},
-                {0, 1, 1, 0},
-                {0, 1, 0, 0},
-                {0, 0, 0, 0}
-            }
-        }};
+            {0, 0, 1, 0},
+            {0, 0, 1, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 1, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 0, 0, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}}},
+    // 4 = T block
+    {
+        {
+            {0, 1, 0, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}}
+    },
+    // 5 = S block
+    {
+        {
+            {0, 1, 1, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 0}}
+    },
+    // 6 = Z block
+    {
+        {
+            {0, 1, 1, 0},
+            {0, 0, 1, 1},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 0, 1, 0},
+            {0, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        }
+    }};
 //</editor-fold>
     /*
      * Reference to the TetrisPanel containing this object;
@@ -163,10 +163,10 @@ public class TetrisEngine {
      * Thread to run for the game.
      */
     Thread gamethread;
-    
+
     public final int WIDTH = 6;
     public final int HEIGHT = 20;
-    
+
     /*
      * DBlock array representation of the gamefield. Blocks are counted X first
      * starting from the top left: blocks[5][3] would be a block 5 left and 3
@@ -218,7 +218,6 @@ public class TetrisEngine {
      */
     public TetrisEngine(TetrisPanel p) {
         //Bounds changed to be thus:
-        
 
         //Initialize a DBlock array and set all its contents
         // to DBlock.EMPTY.
@@ -294,7 +293,6 @@ public class TetrisEngine {
         if (activeblock == null || activeblock.array == null || state != GameState.PLAYING) {
             return;
         }
-
 
         Block[][] lastblock = copy2D(activeblock.array);
         int lastrot = activeblock.rot;
@@ -378,7 +376,7 @@ public class TetrisEngine {
         score = 0;
         lines = 0;
         clear();
-        if(activeblock != null){
+        if (activeblock != null) {
             activeblock.array = null;
         }
     }
@@ -410,37 +408,37 @@ public class TetrisEngine {
 
         //Return immediately.
         /*new Thread() {
-            @Override
-            public void run() {
-                //pause the game first.*/
-                state = GameState.GAMEOVER;
-                
-                if (!tetris.isHumanControlled) {
-                    tetris.controller.flag = false;
-                    lastlines = lines;
-                }
+         @Override
+         public void run() {
+         //pause the game first.*/
+        state = GameState.GAMEOVER;
 
-                int lastscore = score;
+        if (!tetris.isHumanControlled) {
+            tetris.controller.flag = false;
+            lastlines = lines;
+        }
 
-                //sleep_(20);
-                reset();
-                //sleep_(20);
+        int lastscore = score;
 
-                if (!tetris.isHumanControlled) {
-                    /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {
-                        tetris.genetic.sendScore(lastscore);
-                    }*/
-                    
-                    tetris.controller = new TetrisAI(tetris);
-                    
-                    state = GameState.PLAYING;
-                    anomaly_flag = false;
-                    lastnewblock = System.currentTimeMillis();
-                    tetris.controller.send_ready(lastscore);
-                }
+        //sleep_(20);
+        reset();
+        //sleep_(20);
 
-            /*}
-        }.start();*/
+        if (!tetris.isHumanControlled) {
+            /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {
+             tetris.genetic.sendScore(lastscore);
+             }*/
+
+            tetris.controller = new TetrisAI(tetris);
+
+            state = GameState.PLAYING;
+            anomaly_flag = false;
+            lastnewblock = System.currentTimeMillis();
+            tetris.controller.send_ready(lastscore);
+        }
+
+        /*}
+         }.start();*/
     }
 
     /*
@@ -448,7 +446,7 @@ public class TetrisEngine {
      * Returns false if a block already exists under it, true otherwise.
      *
      * This method isn't very efficient. Thus, it must be
-	 * synchronized.
+     * synchronized.
      */
     private synchronized boolean copy() {
         try {
@@ -534,9 +532,8 @@ public class TetrisEngine {
     private synchronized void checkforclears() {
         //Threading fix?
         activeblock = null;
-        
-        //Don't care about fading
 
+        //Don't care about fading
         //Now actually remove the blocks.
         checkforclears(0);
         newblock();
@@ -575,10 +572,10 @@ public class TetrisEngine {
             }
 
             //TODO Find a better way to fix StackOverflowError
-            if(alreadycleared < 5){
-            //Recursion step! Necessary if you want to clear more than
-            //1 line at a time!
-            checkforclears(alreadycleared);
+            if (alreadycleared < 5) {
+                //Recursion step! Necessary if you want to clear more than
+                //1 line at a time!
+                checkforclears(alreadycleared);
             }
         } else if (alreadycleared > 0) {
             // Use Nintendo's original scoring system.
@@ -624,7 +621,7 @@ public class TetrisEngine {
         }
 
         //Bonus?
-        //score += 1;
+        score += 1;
 
         //Successfully dropped 1 block, here.
         blocksdropped += 1;
@@ -643,25 +640,21 @@ public class TetrisEngine {
      * Create and return a random block.
      */
     private synchronized Tetromino getRandBlock() {
+        int blockType = rdm.nextInt(blockdef.length);
+        int rotation = blockdef[blockType].length == 1 ? 1 : rdm.nextInt(blockdef[blockType].length);
+
         Tetromino ret = new Tetromino();
-        int x = blockdef.length;
-        int rnd1 = rdm.nextInt(x);
-
-        int y = blockdef[rnd1].length;
-        int rnd2 = rdm.nextInt(y);
-
-        ret.setType(rnd1);
-        ret.rot = rnd2;
-
-        ret.array = toBlock2D(blockdef[rnd1][rnd2]);
+        ret.rot = rotation;
+        ret.setType(blockType);
+        ret.array = toBlock2D(blockdef[blockType][rotation]);
 
         ret.x = WIDTH / 2 - 2;
         ret.y = 0;
 
-        Color bcolor = Block.colors[rnd1];
+        Color bcolor = Block.colors[blockType];
         ret.color = bcolor;
-        for (Block[] blocks : ret.array) {
-            for (Block block : blocks) {
+        for (Block[] lineOfBlocks : ret.array) {
+            for (Block block : lineOfBlocks) {
                 if (block.getState() == Block.ACTIVE) {
                     block.setColor(ret.color);
                 }
@@ -676,13 +669,13 @@ public class TetrisEngine {
     static Block[][] copy2D(Block[][] in) {
         //if(in == null) return null;
         Block[][] ret = new Block[in.length][in[0].length];
-        
+
         for (int i = 0; i < in.length; i++) {
             for (int j = 0; j < in[0].length; j++) {
                 ret[i][j] = in[i][j].clone();
             }
         }
-        
+
         return ret;
     }
 

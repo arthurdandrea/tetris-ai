@@ -27,6 +27,7 @@ import tetris.generic.Block;
  * holds most of the objects needed to render the game on a JDesktopPane.
  */
 public class TetrisPanel extends JPanel {
+
     //---------------BEGIN PUBLIC VARIABLES---------------//
     /*
      * Public reference to the TetrisEngine object.
@@ -56,7 +57,7 @@ public class TetrisPanel extends JPanel {
      * the same HEIGHT and WIDTH.
      */
     public int squaredim;
-    
+
     /*
      * Dimensions of the squares of the next block as drawn. See squaredim.
      */
@@ -179,14 +180,14 @@ public class TetrisPanel extends JPanel {
         //Draw: background, then main, then foreground.
         g.drawImage(bg, 0, 0, this);
         //engine.draw(g);
-        
-        synchronized(engine) {
+
+        synchronized (engine) {
             drawGame(g);
         }
         g.drawImage(fg, 0, 0, this);
 
     }
-    
+
     private void drawGame(Graphics g) {
         //The coordinates of the top left corner of the game board.
         int mainx = (this.getWidth() - bounds.width) / 2 + 50;
@@ -224,7 +225,6 @@ public class TetrisPanel extends JPanel {
         int nextx = 134;
         int nexty = 336;
 
-
         //Less typing.
         Block[][] nextb;
         if (engine.nextblock != null) {
@@ -243,7 +243,6 @@ public class TetrisPanel extends JPanel {
                 }
             }
         }
-
 
         if (engine.state == GameState.PAUSED || engine.state == GameState.GAMEOVER) {
             g.setColor(new Color(255, 255, 255, 160));
@@ -276,9 +275,11 @@ public class TetrisPanel extends JPanel {
      * Note that some keys should never be counted more than once.
      */
     class KeyPressManager extends KeyAdapter {
+
         static final int delay = 40;
 
         class KeyHandlingThread extends Thread {
+
             volatile boolean flag = true;
 
             public void run() {
@@ -359,8 +360,6 @@ public class TetrisPanel extends JPanel {
              * if(ck==KeyEvent.VK_LEFT) keys[0]=false; else
              * if(ck==KeyEvent.VK_RIGHT) keys[1]=false;
              */
-
-
             if (ck == KeyEvent.VK_DOWN) {
                 keys[2] = false;
             }

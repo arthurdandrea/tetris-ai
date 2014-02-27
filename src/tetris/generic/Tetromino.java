@@ -6,7 +6,11 @@ import java.awt.Color;
  * Object representation of a tetromino.
  */
 public class Tetromino implements Cloneable {
-    public enum Type { Long, Box, L, J, T, S, Z }
+
+    public enum Type {
+
+        Long, Box, L, J, T, S, Z
+    }
     private static final Type[] TypeValues = Type.values();
 
     void setType(int rnd1) {

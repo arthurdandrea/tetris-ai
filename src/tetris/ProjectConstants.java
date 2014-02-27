@@ -15,6 +15,7 @@ public class ProjectConstants {
     /*
      * Should the application start fullscreened?
      */
+
     public static final boolean STARTFS = false;
 
     /*

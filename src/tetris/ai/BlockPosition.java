@@ -1,9 +1,10 @@
 package tetris.ai;
 
 public class BlockPosition {
+
     byte bx;
     byte rot;
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

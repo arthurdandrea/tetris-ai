@@ -1,16 +1,16 @@
 package tetris.ai;
 
 //A single tuple for the function value
-
 class StateAction {
+
     private State state;
     private BlockPosition action;
-    
+
     public StateAction(State state, BlockPosition action) {
         this.state = state;
         this.action = action;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (obj == null) {

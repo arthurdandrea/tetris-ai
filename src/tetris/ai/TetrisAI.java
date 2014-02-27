@@ -9,6 +9,7 @@ import tetris.TetrisPanel;
  * engines so it can send key events when necessary and it knows the current block
  */
 public class TetrisAI extends AbstractAI {
+
     // Constants (sort of) for score evaluation.
     public double _TOUCHING_EDGES = 3.97;
     public double _TOUCHING_WALLS = 6.52;
@@ -20,12 +21,12 @@ public class TetrisAI extends AbstractAI {
 
     public TetrisAI(TetrisPanel panel) {
         super(panel);
-        
+
         setThread(new AIThread());
     }
-    
+
     @Override
-    protected BlockPosition computeBestFit(TetrisEngine ge) {        
+    protected BlockPosition computeBestFit(TetrisEngine ge) {
         List<BlockPosition> posfits = getPossibleFits(ge, ge.activeblock.type);
         List<BlockPosition> posfits2 = getPossibleFits(ge, ge.nextblock.type);
 
@@ -60,7 +61,6 @@ public class TetrisAI extends AbstractAI {
         // First thing: Simulate the drop. Do this on a mock grid.
         // copying it here may seem like a waste but clearing it
         // after each iteration is too much of a hassle.
-
         // This copies the grid.
         byte[][] mockgrid = mockGrid(ge);
 
@@ -86,7 +86,6 @@ public class TetrisAI extends AbstractAI {
             // working upwards. If we're fitting a line-block on an empty
             // grid then the HEIGHT would be HEIGHT-1, and it can't be any
             // lower than that, so that's where we'll start.
-
             int h;
             for (h = ge.HEIGHT - 1;; h--) {
 
@@ -100,7 +99,6 @@ public class TetrisAI extends AbstractAI {
 
                         //we have to simulate lazy evaluation in order to avoid
                         //out of bounds errors.
-
                         if (block_p) {
                             //still have to check for overflow. X-overflow can't
                             //happen at this stage but Y-overflow can.
@@ -153,7 +151,6 @@ public class TetrisAI extends AbstractAI {
                 }
             }
 
-
             // check for clears
             boolean foundline;
             do {
@@ -180,12 +177,10 @@ public class TetrisAI extends AbstractAI {
         }
 
         // Now we evaluate the resulting position.
-
         // Part of the evaluation algorithm is to count the number of touching sides.
         // We do this by generating all pairs and seeing how many them are touching.
         // If they add up to 3, it means one of them is from the active block and the
         // other is a normal block (ie. they're touching).
-
         double score = 0.0;
 
         //horizontal pairs
@@ -261,10 +256,9 @@ public class TetrisAI extends AbstractAI {
          * for (int i1 = 0; i1 < mockgrid.length; i1++) { for (int i2 = 0; i2 <
          * mockgrid[0].length; i2++) { System.out.print(mockgrid[i1][i2] + " ");
          * } System.out.println(); }
-		System.out.println(score);
+         System.out.println(score);
          */
         //System.exit(0);
-
         return score;
     }
 }
