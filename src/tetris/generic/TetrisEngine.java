@@ -151,6 +151,7 @@ public class TetrisEngine {
      * Next block.
      */
     public volatile Tetromino nextblock = null;
+
     /*
      * Time of previous step.
      */
@@ -159,10 +160,6 @@ public class TetrisEngine {
      * Not really needed, just a counter for steps.
      */
     int stepcount = 0;
-    /*
-     * Thread to run for the game.
-     */
-    Thread gamethread;
 
     public final int WIDTH = 6;
     public final int HEIGHT = 20;
@@ -229,15 +226,6 @@ public class TetrisEngine {
         }
 
         rdm = new Random();
-
-        //Initialize game thread.
-        gamethread = new Thread() {
-            @Override
-            public void run() {
-                //Only one step, the others are launched when key slammed
-                step();
-            }
-        };
     }
 
     /*
@@ -351,9 +339,7 @@ public class TetrisEngine {
      * doesn't appear halfway down the screen.
      */
     public synchronized void startengine() {
-        if (!gamethread.isAlive()) {
-            gamethread.start();
-        }
+        this.step();
     }
 
     /*
