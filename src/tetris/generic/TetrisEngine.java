@@ -202,10 +202,6 @@ public class TetrisEngine {
      * Current state of the game (PLAYING, PAUSED, etc.)
      */
     public volatile GameState state;
-    /*
-     * How many lines did the AI get last time?
-     */
-    public int lastlines = 0;
     public long lastnewblock = System.currentTimeMillis();
 
     /*
@@ -390,25 +386,11 @@ public class TetrisEngine {
             return;
         }
 
-        //Return immediately.
-        /*new Thread() {
-         @Override
-         public void run() {
-         //pause the game first.*/
         state = GameState.GAMEOVER;
-
-        lastlines = lines;
-
+        int lastlines = lines;
         int lastscore = score;
-
-        //sleep_(20);
         reset();
-        //sleep_(20);
-
-        listener.onGameOver(this, lastscore);
-
-        /*}
-         }.start();*/
+        listener.onGameOver(this, lastscore, lastlines);
     }
 
     /*

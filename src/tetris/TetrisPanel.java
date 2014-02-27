@@ -65,6 +65,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
     
     private Dimension bounds;
     private boolean anomaly_flag = false;
+    private int lastLines;
 
     /*
      * Public TetrisPanel constructor.
@@ -259,8 +260,8 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
                 if (this.isHumanControlled) {
                     pausestring = "Game over (SHIFT to restart).";
                 } else {
-                    pausestring = Integer.toString(engine.lastlines)
-                            + (engine.lastlines == 1 ? " Line" : " Lines");
+                    pausestring = Integer.toString(this.lastLines)
+                            + (this.lastLines == 1 ? " Line" : " Lines");
                 }
             }
 
@@ -271,8 +272,10 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
     }
 
     @Override
-    public void onGameOver(TetrisEngine engine, int lastScore) {
+    public void onGameOver(TetrisEngine engine, int lastScore, int lastLines) {
         assert this.engine == engine;
+
+        this.lastLines = lastLines;
 
         if (this.isHumanControlled) { return; }
         /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {

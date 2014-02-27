@@ -10,6 +10,6 @@ package tetris.generic;
  * @author arthur
  */
 public interface TetrisEngineListener {
-    public void onGameOver(TetrisEngine engine, int lastScore);
+    public void onGameOver(TetrisEngine engine, int lastScore, int lastLines);
     public void onNewBlock(TetrisEngine engine);
 }
