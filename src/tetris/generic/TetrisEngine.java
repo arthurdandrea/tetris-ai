@@ -585,7 +585,7 @@ public class TetrisEngine {
      */
     private synchronized Tetromino getRandBlock() {
         int blockType = rdm.nextInt(blockdef.length);
-        int rotation = blockdef[blockType].length == 1 ? 1 : rdm.nextInt(blockdef[blockType].length);
+        int rotation = blockdef[blockType].length == 1 ? 0 : rdm.nextInt(blockdef[blockType].length);
 
         Tetromino ret = new Tetromino();
         ret.rot = rotation;
