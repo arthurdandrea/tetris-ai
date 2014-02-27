@@ -1,9 +1,9 @@
 package tetris;
 
-import static tetris.ProjectConstants.formatStackTrace;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import static tetris.ProjectConstants.formatStackTrace;
 
 /*
  * Class that starts the app!

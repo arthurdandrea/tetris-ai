@@ -3,12 +3,6 @@ package tetris;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import tetris.generic.TetrisEngine;
-import tetris.ai.TetrisAI;
-import tetris.ai.AbstractAI;
-import tetris.ProjectConstants.GameState;
-import static tetris.ProjectConstants.getResURL;
-import static tetris.ProjectConstants.sleep_;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.event.KeyAdapter;
@@ -19,8 +13,14 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import tetris.ProjectConstants.GameState;
 import static tetris.ProjectConstants.addLeadingZeroes;
+import static tetris.ProjectConstants.getResURL;
+import static tetris.ProjectConstants.sleep_;
+import tetris.ai.AbstractAI;
+import tetris.ai.TetrisAI;
 import tetris.generic.Block;
+import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngineListener;
 
 /*

@@ -1,11 +1,11 @@
 package tetris.ai;
 
-import static tetris.ProjectConstants.sleep_;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tetris.ProjectConstants;
+import static tetris.ProjectConstants.sleep_;
 import tetris.generic.TetrisEngine;
 import tetris.generic.Tetromino;
 

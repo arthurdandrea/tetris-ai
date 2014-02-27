@@ -1,12 +1,12 @@
 package tetris;
 
-import static tetris.ProjectConstants.STARTFS;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import static tetris.ProjectConstants.STARTFS;
 
 /*
  * The game window.

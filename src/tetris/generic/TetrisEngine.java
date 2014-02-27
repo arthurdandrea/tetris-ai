@@ -1,11 +1,8 @@
 package tetris.generic;
 
-import tetris.ai.TetrisAI;
-import tetris.ai.AbstractAI;
-import tetris.ProjectConstants.GameState;
 import java.awt.Color;
 import java.util.Random;
-import tetris.TetrisPanel;
+import tetris.ProjectConstants.GameState;
 
 /*
  * This class calculates most of the block positions, rotations, etc, although
