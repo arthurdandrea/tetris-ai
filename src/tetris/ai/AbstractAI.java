@@ -4,7 +4,7 @@ import static tetris.ProjectConstants.sleep_;
 import java.util.ArrayList;
 import java.util.List;
 import tetris.ProjectConstants;
-import tetris.TetrisEngine;
+import tetris.generic.TetrisEngine;
 import tetris.TetrisPanel;
 
 public abstract class AbstractAI {
@@ -51,9 +51,9 @@ public abstract class AbstractAI {
     protected abstract BlockPosition computeBestFit(TetrisEngine engine);
 
     public byte[][] mockGrid(TetrisEngine ge) {
-        byte[][] mockgrid = new byte[TetrisEngine.WIDTH][TetrisEngine.HEIGHT];
-        for (int i = 0; i < TetrisEngine.WIDTH; i++) {
-            for (int j = 0; j < TetrisEngine.HEIGHT; j++) {
+        byte[][] mockgrid = new byte[ge.WIDTH][ge.HEIGHT];
+        for (int i = 0; i < ge.WIDTH; i++) {
+            for (int j = 0; j < ge.HEIGHT; j++) {
                 byte s = (byte) ge.blocks[i][j].getState();
                 if (s == 2) {
                     s = 0;
@@ -188,7 +188,7 @@ public abstract class AbstractAI {
     }
     
     // List of all the possible fits.
-    protected List<BlockPosition> getPossibleFits(tetris.TetrisEngine ge, int type) {
+    protected List<BlockPosition> getPossibleFits(tetris.generic.TetrisEngine ge, int type) {
         byte[][][] rotations = TetrisEngine.blockdef[type];
         int nrots = rotations.length;
         
@@ -200,7 +200,7 @@ public abstract class AbstractAI {
             int freeL = free / 10;
             int freeR = free % 10;
             int minX = 0 - freeL;
-            int maxX = (TetrisEngine.WIDTH - 4) + freeR;
+            int maxX = (ge.WIDTH - 4) + freeR;
             // now loop through each position for a rotation.
             for (int j = minX; j <= maxX; j++) {
                 BlockPosition put = new BlockPosition();

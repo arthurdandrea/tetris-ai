@@ -1,6 +1,9 @@
 package tetris;
 
-import tetris.ai.ReinforcementAI;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import tetris.generic.TetrisEngine;
 import tetris.ai.TetrisAI;
 import tetris.ai.AbstractAI;
 import tetris.ProjectConstants.GameState;
@@ -14,17 +17,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import static tetris.ProjectConstants.addLeadingZeroes;
+import tetris.generic.Block;
 
 /*
  * TetrisPanel is the panel that contains the (main) panels AKA. core. This also
  * holds most of the objects needed to render the game on a JDesktopPane.
  */
 public class TetrisPanel extends JPanel {
-
     //---------------BEGIN PUBLIC VARIABLES---------------//
     /*
      * Public reference to the TetrisEngine object.
@@ -38,18 +40,28 @@ public class TetrisPanel extends JPanel {
      * Foreground image.
      */
     public Image fg = null;
+
     /*
      * Is it being controlled by a human or ai?
      */
     public boolean isHumanControlled = false;
+
     /*
      * AI object controlling the game.
      */
     public AbstractAI controller = null;
+
     /*
-     * Genetic algorithm to find AI combinations
+     * Dimensions (Width and HEIGHT) of each square. Squares in Tetris must be
+     * the same HEIGHT and WIDTH.
      */
-    public GeneticAIFinder genetic = null;
+    public int squaredim;
+    
+    /*
+     * Dimensions of the squares of the next block as drawn. See squaredim.
+     */
+    public int nextblockdim = 18;
+    private Dimension bounds;
 
     /*
      * Public TetrisPanel constructor.
@@ -57,6 +69,8 @@ public class TetrisPanel extends JPanel {
     public TetrisPanel() {
         //Initialize the TetrisEngine object.
         engine = new TetrisEngine(this);
+        squaredim = 20;//300 / engine.WIDTH;
+        bounds = new Dimension(squaredim * engine.WIDTH, squaredim * engine.HEIGHT);
 
         //This is the bg-image.
         try {
@@ -140,7 +154,6 @@ public class TetrisPanel extends JPanel {
 
         //Focus when clicked.
         addMouseListener(new MouseAdapter() {
-
             public void mousePressed(MouseEvent me) {
                 TetrisPanel.this.requestFocusInWindow();
             }
@@ -150,19 +163,14 @@ public class TetrisPanel extends JPanel {
         engine.state = GameState.PAUSED;
 
         if (!isHumanControlled) {
-            if(ProjectConstants.BASIC_AI){
-                controller = new TetrisAI(this);
-                genetic = new GeneticAIFinder(engine);
-                genetic.setAIValues((TetrisAI) controller);
-            } else {
-                controller = new ReinforcementAI(this);
-            }
+            controller = new TetrisAI(this);
         }
     }
 
     /*
      * Paints this component, called with repaint().
      */
+    @Override
     public void paintComponent(Graphics g) {
         //Necessary mostly because this is a JDesktopPane and
         //not a JPanel.
@@ -170,8 +178,94 @@ public class TetrisPanel extends JPanel {
 
         //Draw: background, then main, then foreground.
         g.drawImage(bg, 0, 0, this);
-        engine.draw(g);
+        //engine.draw(g);
+        
+        synchronized(engine) {
+            drawGame(g);
+        }
         g.drawImage(fg, 0, 0, this);
+
+    }
+    
+    private void drawGame(Graphics g) {
+        //The coordinates of the top left corner of the game board.
+        int mainx = (this.getWidth() - bounds.width) / 2 + 50;
+        int mainy = (this.getHeight() - bounds.height) / 2;
+
+        //Create a border;
+        g.setColor(Color.BLACK);
+        g.drawRect(mainx - 1, mainy - 1,
+                bounds.width + 2, bounds.height + 2);
+
+        g.setColor(Color.BLACK);
+        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18));
+
+        g.drawString(addLeadingZeroes(engine.score, 6), 156, 213);//Draw score
+        g.drawString(addLeadingZeroes(engine.lines, 3), 156, 250);//Draw lines
+
+        //Loop and draw all the blocks.
+        for (int c1 = 0; c1 < engine.blocks.length; c1++) {
+            for (int c2 = 0; c2 < engine.blocks[c1].length; c2++) {
+                // Just in case block's null, it doesn't draw as black.
+                g.setColor(Block.emptycolor);
+                g.setColor(engine.blocks[c1][c2].getColor());
+
+                g.fillRect(mainx + c1 * squaredim,
+                        mainy + c2 * squaredim, squaredim, squaredim);
+
+                //Draw square borders.
+                g.setColor(new Color(255, 255, 255, 25));
+                g.drawRect(mainx + c1 * squaredim,
+                        mainy + c2 * squaredim, squaredim, squaredim);
+
+            }
+        }
+
+        int nextx = 134;
+        int nexty = 336;
+
+
+        //Less typing.
+        Block[][] nextb;
+        if (engine.nextblock != null) {
+            nextb = engine.nextblock.array;
+            //Loop and draw next block.
+            for (int c1 = 0; c1 < nextb.length; c1++) {
+                for (int c2 = 0; c2 < nextb[c1].length; c2++) {
+                    Color c = nextb[c2][c1].getColor();
+
+                    if (c != null && !c.equals(Block.emptycolor)) {
+                        g.setColor(new Color(0, 0, 0, 128));
+
+                        g.fillRect(nextx + c1 * nextblockdim,
+                                nexty + c2 * nextblockdim, nextblockdim, nextblockdim);
+                    }
+                }
+            }
+        }
+
+
+        if (engine.state == GameState.PAUSED || engine.state == GameState.GAMEOVER) {
+            g.setColor(new Color(255, 255, 255, 160));
+            g.setFont(new Font(Font.SERIF, Font.BOLD, 16));
+            String pausestring = null;
+
+            if (engine.state == GameState.PAUSED) {
+                pausestring = "(SHIFT to play).";
+            }
+
+            if (engine.state == GameState.GAMEOVER) {
+                if (this.isHumanControlled) {
+                    pausestring = "Game over (SHIFT to restart).";
+                } else {
+                    pausestring = Integer.toString(engine.lastlines)
+                            + (engine.lastlines == 1 ? " Line" : " Lines");
+                }
+            }
+
+            g.drawString(pausestring,
+                    (this.getWidth() - g.getFontMetrics().stringWidth(pausestring)) / 2 + 50, 300);
+        }
 
     }
 

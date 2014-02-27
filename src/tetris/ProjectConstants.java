@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /*
  * This class contains a group of project constants. Use import static tetris.code.ProjectConstants.
@@ -14,8 +16,6 @@ public class ProjectConstants {
      * Should the application start fullscreened?
      */
     public static final boolean STARTFS = false;
-    
-    public static final boolean BASIC_AI = false;
 
     /*
      * Yes this adds leading zeroes.
@@ -35,7 +35,12 @@ public class ProjectConstants {
      * Sleeps the current thread.
      */
     public static void sleep_(int n) {
-        //TADADADA
+        //System.out.printf("sleeping %d\n", n);
+        try {
+            Thread.sleep(n);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(ProjectConstants.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     /*

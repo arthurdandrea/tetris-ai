@@ -1,16 +1,12 @@
-package tetris;
+package tetris.generic;
 
 import tetris.ai.TetrisAI;
 import tetris.ai.AbstractAI;
 import tetris.ProjectConstants.GameState;
-import static tetris.ProjectConstants.addLeadingZeroes;
-import static tetris.ProjectConstants.sleep_;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Graphics;
-import java.util.ArrayList;
 import java.util.Random;
+import tetris.TetrisPanel;
 
 /*
  * This class calculates most of the block positions, rotations, etc, although
@@ -147,7 +143,7 @@ public class TetrisEngine {
     /*
      * Random object used to generate new blocks.
      */
-    Random rdm;
+    private Random rdm;
     /*
      * Primitive representation of active block.
      */
@@ -168,23 +164,10 @@ public class TetrisEngine {
      * Thread to run for the game.
      */
     Thread gamethread;
-    /*
-     * Size of Tetris window, in pixels.
-     */
-    public Dimension bounds;
     
-    public static final int WIDTH = 6;
-    public static final int HEIGHT = 20;
+    public final int WIDTH = 6;
+    public final int HEIGHT = 20;
     
-    /*
-     * Dimensions (Width and HEIGHT) of each square. Squares in Tetris must be
-     * the same HEIGHT and WIDTH.
-     */
-    public int squaredim = 300 / WIDTH;
-    /*
-     * Dimensions of the squares of the next block as drawn. See squaredim.
-     */
-    public int nextblockdim = 18;
     /*
      * DBlock array representation of the gamefield. Blocks are counted X first
      * starting from the top left: blocks[5][3] would be a block 5 left and 3
@@ -236,7 +219,7 @@ public class TetrisEngine {
      */
     public TetrisEngine(TetrisPanel p) {
         //Bounds changed to be thus:
-        bounds = new Dimension(squaredim * WIDTH, squaredim * HEIGHT);
+        
 
         //Initialize a DBlock array and set all its contents
         // to DBlock.EMPTY.
@@ -259,92 +242,6 @@ public class TetrisEngine {
                 step();
             }
         };
-    }
-
-    //---------------FUNCTIONS---------------//
-    /*
-     * Draws the stuff, minus backgrounds, etc.
-     */
-    public synchronized void draw(Graphics g) {
-
-        //The coordinates of the top left corner of the game board.
-        int mainx = (tetris.getWidth() - bounds.width) / 2 + 50;
-        int mainy = (tetris.getHeight() - bounds.height) / 2;
-
-        //Create a border;
-        g.setColor(Color.BLACK);
-        g.drawRect(mainx - 1, mainy - 1,
-                bounds.width + 2, bounds.height + 2);
-
-        g.setColor(Color.BLACK);
-        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18));
-
-        g.drawString(addLeadingZeroes(score, 6), 156, 213);//Draw score
-        g.drawString(addLeadingZeroes(lines, 3), 156, 250);//Draw lines
-
-        //Loop and draw all the blocks.
-        for (int c1 = 0; c1 < blocks.length; c1++) {
-            for (int c2 = 0; c2 < blocks[c1].length; c2++) {
-                // Just in case block's null, it doesn't draw as black.
-                g.setColor(Block.emptycolor);
-                g.setColor(blocks[c1][c2].getColor());
-
-                g.fillRect(mainx + c1 * squaredim,
-                        mainy + c2 * squaredim, squaredim, squaredim);
-
-                //Draw square borders.
-                g.setColor(new Color(255, 255, 255, 25));
-                g.drawRect(mainx + c1 * squaredim,
-                        mainy + c2 * squaredim, squaredim, squaredim);
-
-            }
-        }
-
-        int nextx = 134;
-        int nexty = 336;
-
-
-        //Less typing.
-        Block[][] nextb;
-        if (nextblock != null) {
-            nextb = nextblock.array;
-            //Loop and draw next block.
-            for (int c1 = 0; c1 < nextb.length; c1++) {
-                for (int c2 = 0; c2 < nextb[c1].length; c2++) {
-                    Color c = nextb[c2][c1].getColor();
-
-                    if (c != null && !c.equals(Block.emptycolor)) {
-                        g.setColor(new Color(0, 0, 0, 128));
-
-                        g.fillRect(nextx + c1 * nextblockdim,
-                                nexty + c2 * nextblockdim, nextblockdim, nextblockdim);
-                    }
-                }
-            }
-        }
-
-
-        if (state == GameState.PAUSED || state == GameState.GAMEOVER) {
-            g.setColor(new Color(255, 255, 255, 160));
-            g.setFont(new Font(Font.SERIF, Font.BOLD, 16));
-            String pausestring = null;
-
-            if (state == GameState.PAUSED) {
-                pausestring = "(SHIFT to play).";
-            }
-
-            if (state == GameState.GAMEOVER) {
-                if (tetris.isHumanControlled) {
-                    pausestring = "Game over (SHIFT to restart).";
-                } else {
-                    pausestring = Integer.toString(lastlines)
-                            + (lastlines == 1 ? " Line" : " Lines");
-                }
-            }
-
-            g.drawString(pausestring,
-                    (tetris.getWidth() - g.getFontMetrics().stringWidth(pausestring)) / 2 + 50, 300);
-        }
     }
 
     /*
@@ -535,12 +432,7 @@ public class TetrisEngine {
                         tetris.genetic.sendScore(lastscore);
                     }*/
                     
-                    if(ProjectConstants.BASIC_AI){
-                        tetris.controller = new TetrisAI(tetris);
-                        tetris.genetic.setAIValues((TetrisAI) tetris.controller);
-                    } else {
-                        //tetris.controller = new ReinforcementAI(tetris);
-                    }
+                    tetris.controller = new TetrisAI(tetris);
                     
                     state = GameState.PLAYING;
                     anomaly_flag = false;
@@ -561,7 +453,6 @@ public class TetrisEngine {
      */
     private synchronized boolean copy() {
         try {
-
             if (activeblock == null || activeblock.array == null) {
                 return false;//Early NullPointerException failsafe
             }
@@ -734,7 +625,7 @@ public class TetrisEngine {
         }
 
         //Bonus?
-        score += 1;
+        //score += 1;
 
         //Successfully dropped 1 block, here.
         blocksdropped += 1;
@@ -770,12 +661,10 @@ public class TetrisEngine {
 
         Color bcolor = Block.colors[rnd1];
         ret.color = bcolor;
-
-        //Fill the block with their colors first.
-        for (int i = 0; i < ret.array.length; i++) {
-            for (int k = 0; k < ret.array[i].length; k++) {
-                if (ret.array[i][k].getState() == Block.ACTIVE) {
-                    ret.array[i][k].setColor(ret.color);
+        for (Block[] blocks : ret.array) {
+            for (Block block : blocks) {
+                if (block.getState() == Block.ACTIVE) {
+                    block.setColor(ret.color);
                 }
             }
         }

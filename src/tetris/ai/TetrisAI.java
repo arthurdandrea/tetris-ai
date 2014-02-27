@@ -1,7 +1,7 @@
 package tetris.ai;
 
 import java.util.List;
-import tetris.TetrisEngine;
+import tetris.generic.TetrisEngine;
 import tetris.TetrisPanel;
 
 /*
@@ -88,7 +88,7 @@ public class TetrisAI extends AbstractAI {
             // lower than that, so that's where we'll start.
 
             int h;
-            for (h = TetrisEngine.HEIGHT - 1;; h--) {
+            for (h = ge.HEIGHT - 1;; h--) {
 
                 // indicator. 1: fits. 0: doesn't fit. -1: game over.
                 int fit_state = 1;
@@ -105,7 +105,7 @@ public class TetrisAI extends AbstractAI {
                             //still have to check for overflow. X-overflow can't
                             //happen at this stage but Y-overflow can.
 
-                            if (h + j >= TetrisEngine.HEIGHT) {
+                            if (h + j >= ge.HEIGHT) {
                                 fit_state = 0;
                             } else if (h + j < 0) {
                                 fit_state = -1;
@@ -189,12 +189,12 @@ public class TetrisAI extends AbstractAI {
         double score = 0.0;
 
         //horizontal pairs
-        for (int i = 0; i < TetrisEngine.HEIGHT; i++) {
-            for (int j = 0; j < TetrisEngine.WIDTH - 1; j++) {
+        for (int i = 0; i < ge.HEIGHT; i++) {
+            for (int j = 0; j < ge.WIDTH - 1; j++) {
                 if (j == 0 && mockgrid[j][i] == 2) {
                     score += _TOUCHING_WALLS;
                 }
-                if (j + 1 == TetrisEngine.WIDTH - 1 && mockgrid[j + 1][i] == 2) {
+                if (j + 1 == ge.WIDTH - 1 && mockgrid[j + 1][i] == 2) {
                     score += _TOUCHING_WALLS;
                 }
                 if (mockgrid[j][i] + mockgrid[j + 1][i] >= 3) {
@@ -204,9 +204,9 @@ public class TetrisAI extends AbstractAI {
         }
 
         //vertical pairs
-        for (int i = 0; i < TetrisEngine.WIDTH; i++) {
-            for (int j = 0; j < TetrisEngine.HEIGHT - 1; j++) {
-                if (j + 1 == TetrisEngine.HEIGHT - 1 && mockgrid[i][j + 1] == 2) {
+        for (int i = 0; i < ge.WIDTH; i++) {
+            for (int j = 0; j < ge.HEIGHT - 1; j++) {
+                if (j + 1 == ge.HEIGHT - 1 && mockgrid[i][j + 1] == 2) {
                     score += _TOUCHING_FLOOR;
                 }
                 if (mockgrid[i][j] + mockgrid[i][j + 1] >= 3) {
@@ -216,9 +216,9 @@ public class TetrisAI extends AbstractAI {
         }
 
         // Penalize HEIGHT.
-        for (int i = 0; i < TetrisEngine.WIDTH; i++) {
-            for (int j = 0; j < TetrisEngine.HEIGHT; j++) {
-                int curheight = TetrisEngine.HEIGHT - j;
+        for (int i = 0; i < ge.WIDTH; i++) {
+            for (int j = 0; j < ge.HEIGHT; j++) {
+                int curheight = ge.HEIGHT - j;
                 if (mockgrid[i][j] > 0) {
                     score += curheight * _HEIGHT;
                 }
@@ -226,11 +226,11 @@ public class TetrisAI extends AbstractAI {
         }
 
         //Penalize holes. Also penalize blocks above holes.
-        for (int i = 0; i < TetrisEngine.WIDTH; i++) {
+        for (int i = 0; i < ge.WIDTH; i++) {
             // Part 1: Count how many holes (space beneath blocks)
             boolean f = false;
             int holes = 0;
-            for (int j = 0; j < TetrisEngine.HEIGHT; j++) {
+            for (int j = 0; j < ge.HEIGHT; j++) {
                 if (mockgrid[i][j] > 0) {
                     f = true;
                 }
@@ -242,7 +242,7 @@ public class TetrisAI extends AbstractAI {
             // Part 2: Count how many blockades (block above space)
             f = false;
             int blockades = 0;
-            for (int j = TetrisEngine.HEIGHT - 1; j >= 0; j--) {
+            for (int j = ge.HEIGHT - 1; j >= 0; j--) {
                 if (mockgrid[i][j] == 0) {
                     f = true;
                 }
