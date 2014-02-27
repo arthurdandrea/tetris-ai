@@ -1,6 +1,8 @@
-package tetris;
+package tetris.ai;
 
 import java.util.List;
+import tetris.TetrisEngine;
+import tetris.TetrisPanel;
 
 /*
  * This is the default tetris playing AbstractAI. It holds a reference to the tetris
@@ -8,13 +10,13 @@ import java.util.List;
  */
 public class TetrisAI extends AbstractAI {
     // Constants (sort of) for score evaluation.
-    double _TOUCHING_EDGES = 3.97;
-    double _TOUCHING_WALLS = 6.52;
-    double _TOUCHING_FLOOR = 0.65;
-    double _HEIGHT = -3.78;
-    double _HOLES = -2.31;
-    double _BLOCKADE = -0.59;
-    double _CLEAR = 1.6;
+    public double _TOUCHING_EDGES = 3.97;
+    public double _TOUCHING_WALLS = 6.52;
+    public double _TOUCHING_FLOOR = 0.65;
+    public double _HEIGHT = -3.78;
+    public double _HOLES = -2.31;
+    public double _BLOCKADE = -0.59;
+    public double _CLEAR = 1.6;
 
     public TetrisAI(TetrisPanel panel) {
         super(panel);

@@ -1,4 +1,4 @@
-package tetris;
+package tetris.ai;
 
 import java.util.BitSet;
 

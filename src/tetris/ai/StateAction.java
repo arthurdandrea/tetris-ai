@@ -1,6 +1,7 @@
-package tetris;
+package tetris.ai;
 
 //A single tuple for the function value
+
 class StateAction {
     private State state;
     private BlockPosition action;

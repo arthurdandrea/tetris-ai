@@ -1,5 +1,7 @@
 package tetris;
 
+import tetris.ai.TetrisAI;
+import tetris.ai.AbstractAI;
 import tetris.ProjectConstants.GameState;
 import static tetris.ProjectConstants.addLeadingZeroes;
 import static tetris.ProjectConstants.sleep_;
@@ -23,18 +25,19 @@ public class TetrisEngine {
      * array so that when you get a new one it appears in the highest spot 
 	 * possible.
      */
+    //<editor-fold defaultstate="collapsed" desc="blockdef">
     public static final byte[][][][] blockdef = {{
-            // 0 = I block.
-            {
-                {1, 1, 1, 1},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0},
-                {0, 0, 0, 0}},
-            {
-                {0, 1, 0, 0},
-                {0, 1, 0, 0},
-                {0, 1, 0, 0},
-                {0, 1, 0, 0}}},
+        // 0 = I block.
+        {
+            {1, 1, 1, 1},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0}}},
         // 1 = O block
         {
             {
@@ -136,6 +139,7 @@ public class TetrisEngine {
                 {0, 0, 0, 0}
             }
         }};
+//</editor-fold>
     /*
      * Reference to the TetrisPanel containing this object;
      */
@@ -147,11 +151,11 @@ public class TetrisEngine {
     /*
      * Primitive representation of active block.
      */
-    volatile Tetromino activeblock;
+    public volatile Tetromino activeblock;
     /*
      * Next block.
      */
-    volatile Tetromino nextblock = null;
+    public volatile Tetromino nextblock = null;
     /*
      * Time of previous step.
      */
@@ -223,7 +227,7 @@ public class TetrisEngine {
      * How many lines did the AI get last time?
      */
     public int lastlines = 0;
-    long lastnewblock = System.currentTimeMillis();
+    public long lastnewblock = System.currentTimeMillis();
     boolean anomaly_flag = false;
 
     /*

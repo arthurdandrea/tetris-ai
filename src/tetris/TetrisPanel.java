@@ -1,5 +1,8 @@
 package tetris;
 
+import tetris.ai.ReinforcementAI;
+import tetris.ai.TetrisAI;
+import tetris.ai.AbstractAI;
 import tetris.ProjectConstants.GameState;
 import static tetris.ProjectConstants.getResURL;
 import static tetris.ProjectConstants.sleep_;

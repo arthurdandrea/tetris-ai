@@ -1,4 +1,4 @@
-package tetris;
+package tetris.ai;
 
 public class BlockPosition {
     byte bx;

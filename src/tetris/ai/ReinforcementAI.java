@@ -1,9 +1,12 @@
-package tetris;
+package tetris.ai;
 
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import tetris.Block;
+import tetris.TetrisEngine;
+import tetris.TetrisPanel;
 
 /*
  * Reinforcement learning AI 

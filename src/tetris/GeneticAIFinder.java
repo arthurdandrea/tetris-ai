@@ -1,5 +1,6 @@
 package tetris;
 
+import tetris.ai.TetrisAI;
 import java.util.*;
 
 /*

@@ -1,16 +1,19 @@
-package tetris;
+package tetris.ai;
 
 import static tetris.ProjectConstants.sleep_;
 import java.util.ArrayList;
 import java.util.List;
+import tetris.ProjectConstants;
+import tetris.TetrisEngine;
+import tetris.TetrisPanel;
 
 public abstract class AbstractAI {
     protected TetrisPanel panel;
     protected TetrisEngine engine;
     
-    Thread thread;
+    public Thread thread;
     
-    volatile boolean flag = false;
+    public volatile boolean flag = false;
     
     /*
      * Time (ms) AbstractAI has to wait per keypress.
