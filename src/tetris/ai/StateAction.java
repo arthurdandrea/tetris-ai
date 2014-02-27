@@ -6,7 +6,7 @@ class StateAction {
     private State state;
     private BlockPosition action;
 
-    public StateAction(State state, BlockPosition action) {
+    StateAction(State state, BlockPosition action) {
         this.state = state;
         this.action = action;
     }
@@ -23,10 +23,7 @@ class StateAction {
         if (this.state != other.state && (this.state == null || !this.state.equals(other.state))) {
             return false;
         }
-        if (this.action != other.action && (this.action == null || !this.action.equals(other.action))) {
-            return false;
-        }
-        return true;
+        return this.action == other.action || (this.action != null && this.action.equals(other.action));
     }
 
     @Override

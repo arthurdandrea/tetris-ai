@@ -15,10 +15,7 @@ public class State {
             return false;
         }
         final State other = (State) obj;
-        if (this.bs != other.bs && (this.bs == null || !this.bs.equals(other.bs))) {
-            return false;
-        }
-        return true;
+        return this.bs == other.bs || (this.bs != null && this.bs.equals(other.bs));
     }
 
     @Override

@@ -17,10 +17,7 @@ public class BlockPosition {
         if (this.bx != other.bx) {
             return false;
         }
-        if (this.rot != other.rot) {
-            return false;
-        }
-        return true;
+        return this.rot == other.rot;
     }
 
     @Override
