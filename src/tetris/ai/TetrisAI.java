@@ -77,9 +77,9 @@ public class TetrisAI extends AbstractAI {
             }
 
             if (block == 1) {
-                bl = TetrisEngine.blockdef[ge.activeblock.type][r.rot];
+                bl = TetrisEngine.blockdef[ge.activeblock.type.ordinal()][r.rot];
             } else {
-                bl = TetrisEngine.blockdef[ge.nextblock.type][r.rot];
+                bl = TetrisEngine.blockdef[ge.nextblock.type.ordinal()][r.rot];
             }
 
             // Now we find the fitting HEIGHT by starting from the bottom and

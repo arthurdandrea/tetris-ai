@@ -6,6 +6,7 @@ import java.util.List;
 import tetris.ProjectConstants;
 import tetris.generic.TetrisEngine;
 import tetris.TetrisPanel;
+import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {
     protected TetrisPanel panel;
@@ -188,8 +189,10 @@ public abstract class AbstractAI {
     }
     
     // List of all the possible fits.
-    protected List<BlockPosition> getPossibleFits(tetris.generic.TetrisEngine ge, int type) {
-        byte[][][] rotations = TetrisEngine.blockdef[type];
+
+
+    protected List<BlockPosition> getPossibleFits(tetris.generic.TetrisEngine ge, Tetromino.Type type) {
+        byte[][][] rotations = TetrisEngine.blockdef[type.ordinal()];
         int nrots = rotations.length;
         
         List<BlockPosition> posfits = new ArrayList<BlockPosition>();

@@ -4,7 +4,6 @@ import tetris.ai.TetrisAI;
 import tetris.ai.AbstractAI;
 import tetris.ProjectConstants.GameState;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.util.Random;
 import tetris.TetrisPanel;
 
@@ -301,13 +300,13 @@ public class TetrisEngine {
         int lastrot = activeblock.rot;
 
         //Next rotation in array.
-        if (activeblock.rot == blockdef[activeblock.type].length - 1) {
+        if (activeblock.rot == blockdef[activeblock.type.ordinal()].length - 1) {
             activeblock.rot = 0;
         } else {
             activeblock.rot++;
         }
 
-        activeblock.array = toBlock2D(blockdef[activeblock.type][activeblock.rot]);
+        activeblock.array = toBlock2D(blockdef[activeblock.type.ordinal()][activeblock.rot]);
 
         //Failsafe revert.
         if (!copy()) {
@@ -651,7 +650,7 @@ public class TetrisEngine {
         int y = blockdef[rnd1].length;
         int rnd2 = rdm.nextInt(y);
 
-        ret.type = rnd1;
+        ret.setType(rnd1);
         ret.rot = rnd2;
 
         ret.array = toBlock2D(blockdef[rnd1][rnd2]);

@@ -6,6 +6,13 @@ import java.awt.Color;
  * Object representation of a tetromino.
  */
 public class Tetromino implements Cloneable {
+    public enum Type { Long, Box, L, J, T, S, Z }
+    private static final Type[] TypeValues = Type.values();
+
+    void setType(int rnd1) {
+        this.type = TypeValues[rnd1];
+    }
+
     /*
      * Contents (Block array)
      */
@@ -13,7 +20,8 @@ public class Tetromino implements Cloneable {
     /*
      * Position, rotation, type, etc
      */
-    public volatile int x, y, rot, type;
+    public volatile int x, y, rot;
+    public volatile Type type;
     /*
      * Color.
      */
@@ -40,19 +48,19 @@ public class Tetromino implements Cloneable {
     @Override
     public String toString() {
         switch (type) {
-            case 0:
+            case Long:
                 return "Long";
-            case 1:
+            case Box:
                 return "Box";
-            case 2:
+            case L:
                 return "L";
-            case 3:
+            case J:
                 return "J";
-            case 4:
-                return "Dick";
-            case 5:
+            case T:
+                return "T";
+            case S:
                 return "S";
-            case 6:
+            case Z:
                 return "Z";
             default:
                 return "NULL";
