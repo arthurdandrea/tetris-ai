@@ -17,7 +17,6 @@ import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import tetris.ProjectConstants.GameState;
-import static tetris.ProjectConstants.addLeadingZeroes;
 import static tetris.ProjectConstants.getResURL;
 import static tetris.ProjectConstants.sleep_;
 import tetris.ai.AbstractAI;
@@ -201,8 +200,8 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18));
 
         Score score = engine.getScore();
-        g.drawString(addLeadingZeroes(score.getScore(), 6), 156, 213);//Draw score
-        g.drawString(addLeadingZeroes(score.getLinesRemoved(), 3), 156, 250);//Draw lines
+        g.drawString(String.format("%06d", score.getScore()), 156, 213);//Draw score
+        g.drawString(String.format("%03d", score.getLinesRemoved()), 156, 250);//Draw lines
 
         //Loop and draw all the blocks.
         for (int c1 = 0; c1 < engine.blocks.length; c1++) {

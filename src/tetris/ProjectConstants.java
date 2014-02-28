@@ -14,20 +14,6 @@ import java.util.logging.Logger;
 public class ProjectConstants {
 
     /*
-     * Yes this adds leading zeroes.
-     */
-    public static String addLeadingZeroes(int n, int zeroes) {
-        if (zeroes > 10) {
-            throw new IllegalArgumentException();
-        }
-        String ret = Integer.toString(n);
-        while (ret.length() < zeroes) {
-            ret = "0" + ret;
-        }
-        return ret;
-    }
-
-    /*
      * Sleeps the current thread.
      */
     public static void sleep_(int n) {
@@ -115,7 +101,6 @@ public class ProjectConstants {
      */
     //Moving this here lol.
     public enum GameState {
-
         STARTSCREEN,
         PLAYING,
         PAUSED,
