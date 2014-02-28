@@ -12,11 +12,6 @@ import java.util.logging.Logger;
  * This class contains a group of project constants. Use import static tetris.code.ProjectConstants.
  */
 public class ProjectConstants {
-    /*
-     * Should the application start fullscreened?
-     */
-
-    public static final boolean STARTFS = false;
 
     /*
      * Yes this adds leading zeroes.
