@@ -398,58 +398,51 @@ public class TetrisEngine {
      * synchronized.
      */
     private synchronized boolean copy() {
-        try {
-            if (activeblock == null || activeblock.array == null) {
-                return false;//Early NullPointerException failsafe
-            }
-            int x = activeblock.x;
-            int y = activeblock.y;
-            Block[][] buffer = copy2D(blocks);
-
-            //Check if any blocks already have a block under them.
-            //If yes, immediately return.
-            for (int i = 0; i < 4; i++) {
-                for (int r = 0; r < 4; r++) {
-                    if (activeblock.array[r][i].getState() == Block.ACTIVE
-                            && buffer[x + i][y + r].getState() == Block.FILLED) {
-                        return false;
-                    }
-                }
-            }
-
-            //First remove all active blocks.
-            for (int i = 0; i < buffer.length; i++) {
-                for (int r = 0; r < buffer[i].length; r++) {
-                    if (buffer[i][r].getState() == Block.ACTIVE) {
-                        buffer[i][r].setState(Block.EMPTY);
-                        buffer[i][r].setColor(Block.emptycolor);
-                    }
-                }
-            }
-
-            //Then fill in blocks from the new position.
-            for (int i = 0; i < 4; i++) {
-                for (int r = 0; r < 4; r++) {
-                    if (activeblock.array[i][r].getState() == Block.ACTIVE) {
-                        buffer[x + r][y + i].setState(Block.ACTIVE);
-
-                        //facepalm.
-                        buffer[x + r][y + i].setColor(activeblock.color);
-                    }
-                }
-            }
-
-            //Nothing threw an exception; now copy the buffer.
-            blocks = copy2D(buffer);
-
-        } catch (ArrayIndexOutOfBoundsException e) {
-            //Not a problem
+        if (activeblock == null || activeblock.array == null) {
             return false;
-        }//Noob bounds detection.
-        //Exceptions are supposedly slow but
-        //performance isn't really an issue
-        //here.
+        }
+        int x = activeblock.x;
+        int y = activeblock.y;
 
+        // Check if any blocks already have a block under them.
+        // If yes, immediately return.
+        for (int i = 0; i < 4; i++) {
+            for (int r = 0; r < 4; r++) {
+                int xi = x + i;
+                int yr = y + r;
+
+                if (activeblock.array[r][i].getState() == Block.ACTIVE && 
+                        (xi >= WIDTH || yr >= HEIGHT ||
+                        blocks[xi][yr].getState() == Block.FILLED)) {
+                    return false;
+                }
+            }
+        }
+        Block[][] buffer = copy2D(blocks);
+
+        //First remove all active blocks.
+        for (int i = 0; i < WIDTH; i++) {
+            for (int r = 0; r < HEIGHT; r++) {
+                if (buffer[i][r].getState() == Block.ACTIVE) {
+                    buffer[i][r].setState(Block.EMPTY);
+                    buffer[i][r].setColor(Block.emptycolor);
+                }
+            }
+        }
+
+        //Then fill in blocks from the new position.
+        for (int i = 0; i < 4; i++) {
+            for (int r = 0; r < 4; r++) {
+                if (activeblock.array[i][r].getState() == Block.ACTIVE) {
+                    buffer[x + r][y + i].setState(Block.ACTIVE);
+
+                    //facepalm.
+                    buffer[x + r][y + i].setColor(activeblock.color);
+                }
+            }
+        }
+
+        this.blocks = copy2D(buffer);
         return true;
     }
 
