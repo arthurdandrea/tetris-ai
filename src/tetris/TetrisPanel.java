@@ -5,6 +5,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -13,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import tetris.ProjectConstants.GameState;
 import static tetris.ProjectConstants.addLeadingZeroes;
 import static tetris.ProjectConstants.getResURL;
@@ -66,6 +69,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
     private Dimension bounds;
     private boolean anomaly_flag = false;
     private int lastLines;
+    private Timer timer;
 
     /*
      * Public TetrisPanel constructor.
@@ -92,20 +96,13 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
             throw new RuntimeException("Cannot load image.");
         }
 
-        //Animation loop. Updates every 40 milliseconds (25 fps).
-        new Thread() {
+        this.timer = new Timer(100, new ActionListener() {
             @Override
-            public void run() {
-                while (true) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ex) {
-                        //Logger.getLogger(TetrisPanel.class.getName()).log(Level.SEVERE, null, ex);
-                    }
+            public void actionPerformed(ActionEvent e) {
                     repaint();
                 }
-            }
-        }.start();
+        });
+        this.timer.start();
 
         //Add all these key functions.
         KeyPressManager kpm = new KeyPressManager();
