@@ -6,6 +6,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import tetris.ProjectConstants.GameState;
 import static tetris.ProjectConstants.sleep_;
+import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngineListener;
 import tetris.generic.Tetromino;
@@ -102,7 +103,7 @@ public abstract class AbstractAI {
         }
 
         @Override
-        public void onGameOver(TetrisEngine engine, int lastScore, int lastLines) {
+        public void onGameOver(TetrisEngine engine, Score lastScore) {
         }
 
         @Override
@@ -153,7 +154,7 @@ public abstract class AbstractAI {
     }
 
     protected void movehere(int finx, int finrot) {
-        int st_blocksdropped = engine.blocksdropped;
+        int st_blocksdropped = engine.getScore().getBlocksDropped();
         // we're going to make another failsafe here: if at any time we rotate it
         // or move it and it doesn't move then it's stuck and we give up.
         int init_state = engine.activeblock.rot;
@@ -190,7 +191,7 @@ public abstract class AbstractAI {
             engine.keyslam();
             return;
         }
-        while (state == State.Working && engine.blocksdropped == st_blocksdropped) {
+        while (state == State.Working && engine.getScore().getBlocksDropped() == st_blocksdropped) {
             // Now move it down until it drops a new block.
             engine.keydown();
         }

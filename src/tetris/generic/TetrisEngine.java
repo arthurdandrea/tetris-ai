@@ -165,17 +165,7 @@ public final class TetrisEngine {
     /*
      * Score
      */
-    private int score = 0;
-
-    /*
-     * Lines cleared
-     */
-    public int lines = 0;
-
-    /*
-     * How many blocks were dropped so far?
-     */
-    public int blocksdropped = 0;
+    private Score score;
 
     /*
      * Current state of the game (PLAYING, PAUSED, etc.)
@@ -215,7 +205,7 @@ public final class TetrisEngine {
     /**
      * @return the score
      */
-    public int getScore() {
+    public Score getScore() {
         return score;
     }
 
@@ -351,8 +341,7 @@ public final class TetrisEngine {
      * Fully resets everything.
      */
     public synchronized void reset() {
-        this.score = 0;
-        this.lines = 0;
+        this.score = new Score();
         this.activeblock = null;
         this.nextblock = null;
 
@@ -385,12 +374,11 @@ public final class TetrisEngine {
         }
 
         this.setState(GameState.GAMEOVER);
-        int lastlines = lines;
-        int lastscore = getScore();
+        Score lastscore = getScore();
         this.reset();
         List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
         for (TetrisEngineListener listener : listenersCopy) {
-            listener.onGameOver(this, lastscore, lastlines);
+            listener.onGameOver(this, lastscore);
         }
     }
 
@@ -522,23 +510,7 @@ public final class TetrisEngine {
                 checkforclears(alreadycleared);
             }
         } else if (alreadycleared > 0) {
-            // Use Nintendo's original scoring system.
-            switch (alreadycleared) {
-            case 1:
-                score += 40;
-                break;
-            case 2:
-                score += 100;
-                break;
-            case 3:
-                score += 300;
-                break;
-            case 4:
-                score += 1200;
-                break;
-            }
-
-            lines += alreadycleared;
+            score.addRemovedLines(alreadycleared);
         }
     }
 
@@ -565,10 +537,7 @@ public final class TetrisEngine {
         }
 
         //Bonus?
-        score += 1;
-
-        //Successfully dropped 1 block, here.
-        blocksdropped += 1;
+        score.addDroppedBlock();
 
         List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
         for (TetrisEngineListener listener : listenersCopy) {

@@ -23,6 +23,7 @@ import static tetris.ProjectConstants.sleep_;
 import tetris.ai.AbstractAI;
 import tetris.ai.TetrisAI;
 import tetris.generic.Block;
+import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngineListener;
 
@@ -199,8 +200,9 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         g.setColor(Color.BLACK);
         g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18));
 
-        g.drawString(addLeadingZeroes(engine.getScore(), 6), 156, 213);//Draw score
-        g.drawString(addLeadingZeroes(engine.lines, 3), 156, 250);//Draw lines
+        Score score = engine.getScore();
+        g.drawString(addLeadingZeroes(score.getScore(), 6), 156, 213);//Draw score
+        g.drawString(addLeadingZeroes(score.getLinesRemoved(), 3), 156, 250);//Draw lines
 
         //Loop and draw all the blocks.
         for (int c1 = 0; c1 < engine.blocks.length; c1++) {
@@ -267,10 +269,10 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
     }
 
     @Override
-    public void onGameOver(TetrisEngine engine, int lastScore, int lastLines) {
+    public void onGameOver(TetrisEngine engine, Score lastScore) {
         assert this.engine == engine;
 
-        this.lastLines = lastLines;
+        this.lastLines = lastScore.getLinesRemoved();
 
         if (this.isHumanControlled) {
             return;
