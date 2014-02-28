@@ -11,6 +11,8 @@ package tetris.generic;
  */
 public interface TetrisEngineListener {
 
+    public void onGameStateChange(TetrisEngine engine);
+    
     public void onGameOver(TetrisEngine engine, int lastScore, int lastLines);
 
     public void onNewBlock(TetrisEngine engine);

@@ -20,8 +20,6 @@ public class TetrisAI extends AbstractAI {
 
     public TetrisAI(TetrisEngine engine) {
         super(engine);
-
-        setThread(new AIThread());
     }
 
     @Override

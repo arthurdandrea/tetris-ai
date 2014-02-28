@@ -1,6 +1,8 @@
 package tetris.generic;
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import tetris.ProjectConstants.GameState;
 
@@ -9,7 +11,7 @@ import tetris.ProjectConstants.GameState;
  * the TetrisPanel object still keeps track of the concrete block coordinates.
  * This class will change variables in the TetrisPanel class.
  */
-public class TetrisEngine {
+public final class TetrisEngine {
 
     //---------------VARIABLES--------------//
     /*
@@ -132,10 +134,9 @@ public class TetrisEngine {
         }
     }};
 //</editor-fold>
-    
 
-    private TetrisEngineListener listener;
-    
+    private List<TetrisEngineListener> listeners;
+
     /*
      * Random object used to generate new blocks.
      */
@@ -145,19 +146,11 @@ public class TetrisEngine {
      * Primitive representation of active block.
      */
     public volatile Tetromino activeblock;
+
     /*
      * Next block.
      */
-    public volatile Tetromino nextblock = null;
-
-    /*
-     * Time of previous step.
-     */
-    long laststep = System.currentTimeMillis();
-    /*
-     * Not really needed, just a counter for steps.
-     */
-    int stepcount = 0;
+    public volatile Tetromino nextblock;
 
     public final int WIDTH = 6;
     public final int HEIGHT = 20;
@@ -167,59 +160,69 @@ public class TetrisEngine {
      * starting from the top left: blocks[5][3] would be a block 5 left and 3
      * down from (0,0).
      */
-    public volatile Block[][] blocks;
+    public Block[][] blocks;
+
     /*
      * Score
      */
-    public int score = 0;
-    /*
-     * Level (UNUSED)
-     */
-    public int level = 0;
+    private int score = 0;
+
     /*
      * Lines cleared
      */
     public int lines = 0;
+
     /*
      * How many blocks were dropped so far?
      */
     public int blocksdropped = 0;
-    /*
-     * Maximum time allowed per step in milliseconds.
-     */
-    public int steptime = 350; //Less than that is dangerous...
-    /*
-     * Time used to fade block that have been cleared.
-     */
-    public int fadetime = 0;
-    /*
-     * Game mode (UNUSED)
-     */
-    public String mode = "CLASSIC";
+
     /*
      * Current state of the game (PLAYING, PAUSED, etc.)
      */
-    public volatile GameState state;
+    private GameState state;
 
     /*
      * Public constructor. Remember to call startengine() or else this won't do
      * anything! @param p TetrisPanel.
      */
     public TetrisEngine(TetrisEngineListener listener) {
-        this.listener = listener;
-        //Bounds changed to be thus:
-
-        //Initialize a DBlock array and set all its contents
-        // to DBlock.EMPTY.
-        blocks = new Block[WIDTH][HEIGHT];
-        for (int t1 = 0; t1 < blocks.length; t1++) {
-            for (int t2 = 0; t2 < blocks[t1].length; t2++) {
-                blocks[t1][t2] = new Block(Block.EMPTY);
-            }
+        this();
+        if (listener != null) {
+            this.listeners.add(listener);
         }
-
-        rdm = new Random();
     }
+
+    public TetrisEngine() {
+        this.listeners = new ArrayList<>();
+        this.rdm = new Random();
+        this.blocks = new Block[WIDTH][HEIGHT];
+        this.reset();
+    }
+
+    public GameState getState() {
+        return this.state;
+    }
+
+    public void setState(GameState newValue) {
+        this.state = newValue;
+        List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
+        for (TetrisEngineListener listener : listenersCopy) {
+            listener.onGameStateChange(this);
+        }
+    }
+
+    /**
+     * @return the score
+     */
+    public int getScore() {
+        return score;
+    }
+
+    public synchronized void addListener(TetrisEngineListener listener) {
+        this.listeners.add(listener);
+    }
+
 
     /*
      * Called when the RIGHT key is pressed.
@@ -300,8 +303,6 @@ public class TetrisEngine {
             return;
         }
 
-        laststep = System.currentTimeMillis();
-
         //This will game over pretty damn fast!
         if (activeblock.array == null) {
             newblock();
@@ -350,12 +351,12 @@ public class TetrisEngine {
      * Fully resets everything.
      */
     public synchronized void reset() {
-        score = 0;
-        lines = 0;
-        clear();
-        if (activeblock != null) {
-            activeblock.array = null;
-        }
+        this.score = 0;
+        this.lines = 0;
+        this.activeblock = null;
+        this.nextblock = null;
+
+        this.clear();
     }
 
     /*
@@ -379,15 +380,18 @@ public class TetrisEngine {
      */
     public synchronized void gameover() {
         //Check first.
-        if (state == GameState.GAMEOVER) {
+        if (this.state == GameState.GAMEOVER) {
             return;
         }
 
-        state = GameState.GAMEOVER;
+        this.setState(GameState.GAMEOVER);
         int lastlines = lines;
-        int lastscore = score;
-        reset();
-        listener.onGameOver(this, lastscore, lastlines);
+        int lastscore = getScore();
+        this.reset();
+        List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
+        for (TetrisEngineListener listener : listenersCopy) {
+            listener.onGameOver(this, lastscore, lastlines);
+        }
     }
 
     /*
@@ -456,8 +460,6 @@ public class TetrisEngine {
             return;
         }
 
-        laststep = System.currentTimeMillis();
-
         //move 1 down.
         activeblock.y++;
 
@@ -492,8 +494,8 @@ public class TetrisEngine {
         //Loops to find any row that has every block filled.
         // If one block is not filled, the loop breaks.
         ML:
-        for (int i = blocks[0].length - 1; i >= 0; i--) {
-            for (int y = 0; y < blocks.length; y++) {
+        for (int i = HEIGHT - 1; i >= 0; i--) {
+            for (int y = 0; y < WIDTH; y++) {
                 if (!(blocks[y][i].getState() == Block.FILLED)) {
                     continue ML;
                 }
@@ -501,7 +503,7 @@ public class TetrisEngine {
 
             alreadycleared++;
             whichline = i;
-            break ML;
+            break;
         }
 
         //If this recursive step produced more clears:
@@ -522,18 +524,18 @@ public class TetrisEngine {
         } else if (alreadycleared > 0) {
             // Use Nintendo's original scoring system.
             switch (alreadycleared) {
-                case 1:
-                    score += 40;
-                    break;
-                case 2:
-                    score += 100;
-                    break;
-                case 3:
-                    score += 300;
-                    break;
-                case 4:
-                    score += 1200;
-                    break;
+            case 1:
+                score += 40;
+                break;
+            case 2:
+                score += 100;
+                break;
+            case 3:
+                score += 300;
+                break;
+            case 4:
+                score += 1200;
+                break;
             }
 
             lines += alreadycleared;
@@ -568,7 +570,10 @@ public class TetrisEngine {
         //Successfully dropped 1 block, here.
         blocksdropped += 1;
 
-        listener.onNewBlock(this);
+        List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
+        for (TetrisEngineListener listener : listenersCopy) {
+            listener.onNewBlock(this);
+        }
     }
 
     /*
@@ -625,11 +630,11 @@ public class TetrisEngine {
         for (int i = 0; i < b.length; i++) {
             for (int j = 0; j < b[0].length; j++) {
                 switch (b[i][j]) {
-                    case 1:
-                        ret[i][j] = new Block(Block.ACTIVE);
-                        break;
-                    default:
-                        ret[i][j] = new Block(Block.EMPTY);
+                case 1:
+                    ret[i][j] = new Block(Block.ACTIVE);
+                    break;
+                default:
+                    ret[i][j] = new Block(Block.EMPTY);
                 }
             }
         }

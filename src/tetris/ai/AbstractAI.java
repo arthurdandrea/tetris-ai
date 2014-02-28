@@ -4,24 +4,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tetris.ProjectConstants;
+import tetris.ProjectConstants.GameState;
 import static tetris.ProjectConstants.sleep_;
 import tetris.generic.TetrisEngine;
+import tetris.generic.TetrisEngineListener;
 import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {
+    public enum State { Stoped, Working };
 
-    protected TetrisEngine engine;
+    protected final TetrisEngine engine;
 
-    public Thread thread;
+    private boolean isWaiting;
+    private Thread thread;
+    private State state;
 
-    private volatile boolean flag = false;
 
     /*
      * Time (ms) AbstractAI has to wait per keypress.
      * (for maximum speed without crashing, set waittime = 1, do_drop on)
      */
-    public static final int waittime = 10; //1 does crash...
+    public static final int waittime = 10;
 
     /*
      * Do we use hard drops?
@@ -29,37 +32,46 @@ public abstract class AbstractAI {
     public static final boolean do_drop = true;
 
     public AbstractAI(TetrisEngine engine) {
+        this.isWaiting = false;
         this.engine = engine;
+        this.engine.addListener(new EngineListener());
+        this.thread = new Thread(new ThreadRunnable(), "AIThread");
+        this.state = State.Stoped;
+    }
+    
+    public Thread getThread() {
+        return this.thread;
+    }
+ 
+    public synchronized State getState() {
+        return this.state;
     }
 
-    public void setThread(Thread thread) {
-        this.thread = thread;
-    }
-
-    public void send_ready(int lastscore) {
-        if (!flag) {
-            //TODO Check if correct
-            if (!thread.isAlive()) {
-                thread.start();
-            }
-
-            flag = true;
+    public synchronized void start() {
+        if (this.state == State.Stoped) {
+            this.state = State.Working;
+            this.thread.start();
         }
     }
     
     public void stop() {
-        if (!this.flag) return;
-
-        this.flag = false;
-        if (Thread.currentThread() != this.thread) {
-            try {
-                this.thread.join();
-            } catch (InterruptedException ex) {
-                Logger.getLogger(AbstractAI.class.getName()).log(Level.SEVERE, null, ex);
+        if (this.state == State.Working) {
+            synchronized(this) {
+                this.state = State.Stoped;
+                if (this.isWaiting) {
+                    this.notify();
+                }
+            }
+            if (Thread.currentThread() != this.thread) {
+                try {
+                    this.thread.join();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AbstractAI.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         }
     }
-
+    
     protected abstract BlockPosition computeBestFit(TetrisEngine engine);
 
     public byte[][] mockGrid(TetrisEngine ge) {
@@ -76,33 +88,65 @@ public abstract class AbstractAI {
         return mockgrid;
     }
 
-    class AIThread extends Thread {
-
+    private class ThreadRunnable implements Runnable {
         @Override
         public void run() {
-            while (flag) {
+            threadMain();
+        }
+    }
+    
+    private class EngineListener implements TetrisEngineListener {
+        @Override
+        public void onGameStateChange(TetrisEngine engine) {
+            AbstractAI.this.onGameStateChange(engine);
+        }
+
+        @Override
+        public void onGameOver(TetrisEngine engine, int lastScore, int lastLines) {
+        }
+
+        @Override
+        public void onNewBlock(TetrisEngine engine) {
+        }
+    }
+    
+    protected void onGameStateChange(TetrisEngine engine) {
+        if (this.isWaiting) {
+            synchronized (this) {
+                this.notify();
+            }
+        }
+    }
+    
+    protected void threadMain() {
+        while (this.state == State.Working) {
+            //If it's merely paused, do nothing; if it's actually game over
+            //then break loop entirely.
+            if (this.engine.getState() == GameState.PLAYING) {
+                if (this.engine.activeblock == null) {
+                    continue;
+                }
+
+                BlockPosition temp = computeBestFit(engine);
+                if (this.engine.getState() == GameState.PLAYING) {
+                    int elx = temp.bx;
+                    int erot = temp.rot;
+
+                    //Move it!
+                    this.movehere(elx, erot);
+                }
+                //safety
+                sleep_(waittime);
+            } else {
+                this.isWaiting = true;
                 try {
-                    //If it's merely paused, do nothing; if it's actually game over
-                    //then break loop entirely.
-                    if (engine.state == ProjectConstants.GameState.PLAYING) {
-                        if (engine.activeblock == null) {
-                            continue;
-                        }
-
-                        BlockPosition temp = computeBestFit(engine);
-                        if (engine.state == ProjectConstants.GameState.PLAYING) {
-                            int elx = temp.bx;
-                            int erot = temp.rot;
-
-                            //Move it!
-                            movehere(elx, erot);
-                        }
+                    synchronized(this) {
+                        this.wait();
                     }
-                    //safety
-                    sleep_(waittime);
-                } catch (Exception e) {
-                    //System.out.print("Aborting and retrying...\n");
-                    //return;
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(AbstractAI.class.getName()).log(Level.SEVERE, null, ex);
+                } finally {
+                    this.isWaiting = false;
                 }
             }
         }
@@ -114,14 +158,12 @@ public abstract class AbstractAI {
         // or move it and it doesn't move then it's stuck and we give up.
         int init_state = engine.activeblock.rot;
         int prev_state = init_state;
-        while (flag && engine.activeblock.rot != finrot) {
-            //Rotate first so we don't get stuck in the edges.
+        while (state == State.Working && engine.activeblock.rot != finrot) {
+            // Rotate first so we don't get stuck in the edges.
             engine.keyrotate();
-            //Now wait.
-            sleep_(waittime);
+            // Now wait.
             if (prev_state == engine.activeblock.rot || init_state == engine.activeblock.rot) {
                 engine.keyslam();
-                sleep_(waittime > 3 ? waittime : 3);
                 return;
             } else {
                 prev_state = engine.activeblock.rot;
@@ -129,7 +171,7 @@ public abstract class AbstractAI {
             }
         }
         prev_state = engine.activeblock.x;
-        while (flag && engine.activeblock.x != finx) {
+        while (state == State.Working && engine.activeblock.x != finx) {
             //Now nudge the block.
             if (engine.activeblock.x < finx) {
                 engine.keyright();
@@ -139,22 +181,18 @@ public abstract class AbstractAI {
             sleep_(waittime);
             if (prev_state == engine.activeblock.x) {
                 engine.keyslam();
-                sleep_(waittime > 3 ? waittime : 3);
                 return;
             } else {
                 prev_state = engine.activeblock.x;
             }
         }
-        if (flag && do_drop) {
+        if (state == State.Working && do_drop) {
             engine.keyslam();
-            // make the minimum 3 to fix a weird threading glitch
-            sleep_(waittime > 3 ? waittime : 3);
             return;
         }
-        while (flag && engine.blocksdropped == st_blocksdropped) {
-            //Now move it down until it drops a new block.
+        while (state == State.Working && engine.blocksdropped == st_blocksdropped) {
+            // Now move it down until it drops a new block.
             engine.keydown();
-            sleep_(waittime);
         }
     }
 

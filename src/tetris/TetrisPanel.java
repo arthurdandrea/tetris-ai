@@ -31,6 +31,7 @@ import tetris.generic.TetrisEngineListener;
  * holds most of the objects needed to render the game on a JDesktopPane.
  */
 public class TetrisPanel extends JPanel implements TetrisEngineListener {
+
     //---------------BEGIN PUBLIC VARIABLES---------------//
     /*
      * Public reference to the TetrisEngine object.
@@ -65,7 +66,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
      * Dimensions of the squares of the next block as drawn. See squaredim.
      */
     public int nextblockdim = 18;
-    
+
     private Dimension bounds;
     private boolean anomaly_flag = false;
     private int lastLines;
@@ -99,9 +100,10 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         this.timer = new Timer(100, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                    repaint();
-                }
+                repaint();
+            }
         });
+        this.timer.setInitialDelay(0);
         this.timer.start();
 
         //Add all these key functions.
@@ -139,13 +141,13 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         kpm.putKey(KeyEvent.VK_SHIFT, new Runnable() {
             @Override
             public void run() {
-                if (engine.state != GameState.GAMEOVER && controller != null && !controller.thread.isAlive()) {
-                    controller.send_ready(engine.score);
+                if (engine.getState() != GameState.GAMEOVER && controller != null && !controller.getThread().isAlive()) {
+                    controller.start();
                 }
-                if (engine.state == GameState.PAUSED) {
-                    engine.state = GameState.PLAYING;
+                if (engine.getState() == GameState.PAUSED) {
+                    engine.setState(GameState.PLAYING);
                 } else {
-                    engine.state = GameState.PAUSED;
+                    engine.setState(GameState.PAUSED);
                     //System.out.println(controller.thread.isAlive());
                 }
             }
@@ -161,22 +163,17 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         });
 
         setFocusable(true);
-        engine.state = GameState.PAUSED;
+        engine.setState(GameState.PAUSED);
 
         if (!isHumanControlled) {
             controller = new TetrisAI(this.engine);
         }
     }
 
-    /*
-     * Paints this component, called with repaint().
-     */
     @Override
-    public void paintComponent(Graphics g) {
-        //Necessary mostly because this is a JDesktopPane and
-        //not a JPanel.
-        super.paintComponent(g);
-
+    public void paint(Graphics g) {
+        super.paint(g); //To change body of generated methods, choose Tools | Templates.
+        
         //Draw: background, then main, then foreground.
         g.drawImage(bg, 0, 0, this);
         //engine.draw(g);
@@ -185,8 +182,9 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
             drawGame(g);
         }
         g.drawImage(fg, 0, 0, this);
-
     }
+    
+    
 
     private void drawGame(Graphics g) {
         //The coordinates of the top left corner of the game board.
@@ -196,12 +194,12 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         //Create a border;
         g.setColor(Color.BLACK);
         g.drawRect(mainx - 1, mainy - 1,
-                bounds.width + 2, bounds.height + 2);
+                   bounds.width + 2, bounds.height + 2);
 
         g.setColor(Color.BLACK);
         g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18));
 
-        g.drawString(addLeadingZeroes(engine.score, 6), 156, 213);//Draw score
+        g.drawString(addLeadingZeroes(engine.getScore(), 6), 156, 213);//Draw score
         g.drawString(addLeadingZeroes(engine.lines, 3), 156, 250);//Draw lines
 
         //Loop and draw all the blocks.
@@ -212,12 +210,12 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
                 g.setColor(engine.blocks[c1][c2].getColor());
 
                 g.fillRect(mainx + c1 * squaredim,
-                        mainy + c2 * squaredim, squaredim, squaredim);
+                           mainy + c2 * squaredim, squaredim, squaredim);
 
                 //Draw square borders.
                 g.setColor(new Color(255, 255, 255, 25));
                 g.drawRect(mainx + c1 * squaredim,
-                        mainy + c2 * squaredim, squaredim, squaredim);
+                           mainy + c2 * squaredim, squaredim, squaredim);
 
             }
         }
@@ -238,22 +236,22 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
                         g.setColor(new Color(0, 0, 0, 128));
 
                         g.fillRect(nextx + c1 * nextblockdim,
-                                nexty + c2 * nextblockdim, nextblockdim, nextblockdim);
+                                   nexty + c2 * nextblockdim, nextblockdim, nextblockdim);
                     }
                 }
             }
         }
 
-        if (engine.state == GameState.PAUSED || engine.state == GameState.GAMEOVER) {
+        if (engine.getState() == GameState.PAUSED || engine.getState() == GameState.GAMEOVER) {
             g.setColor(new Color(255, 255, 255, 160));
             g.setFont(new Font(Font.SERIF, Font.BOLD, 16));
             String pausestring = null;
 
-            if (engine.state == GameState.PAUSED) {
+            if (engine.getState() == GameState.PAUSED) {
                 pausestring = "(SHIFT to play).";
             }
 
-            if (engine.state == GameState.GAMEOVER) {
+            if (engine.getState() == GameState.GAMEOVER) {
                 if (this.isHumanControlled) {
                     pausestring = "Game over (SHIFT to restart).";
                 } else {
@@ -263,7 +261,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
             }
 
             g.drawString(pausestring,
-                    (this.getWidth() - g.getFontMetrics().stringWidth(pausestring)) / 2 + 50, 300);
+                         (this.getWidth() - g.getFontMetrics().stringWidth(pausestring)) / 2 + 50, 300);
         }
 
     }
@@ -274,21 +272,28 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
 
         this.lastLines = lastLines;
 
-        if (this.isHumanControlled) { return; }
+        if (this.isHumanControlled) {
+            return;
+        }
         /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {
          tetris.genetic.sendScore(lastscore);
          }*/
         this.controller.stop();
         this.controller = new TetrisAI(this.engine);
 
-        this.engine.state = GameState.PLAYING;
+        this.engine.setState(GameState.PLAYING);
         this.anomaly_flag = false;
-        this.controller.send_ready(lastScore);
+        this.controller.start();
     }
 
     @Override
     public void onNewBlock(TetrisEngine engine) {
         assert this.engine == engine;
+    }
+
+    @Override
+    public void onGameStateChange(TetrisEngine engine) {
+
     }
 
     /*
@@ -304,6 +309,10 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         class KeyHandlingThread extends Thread {
 
             volatile boolean flag = true;
+
+            public KeyHandlingThread() {
+                super("KeyHandlingThread");
+            }
 
             public void run() {
                 // The key handling loop.
