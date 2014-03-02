@@ -1,7 +1,15 @@
 package tetris.ai;
 
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.AsyncFunction;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.List;
+import java.util.concurrent.Callable;
 import tetris.generic.TetrisEngine;
+import tetris.generic.Tetromino.Type;
 
 /*
  * This is the default tetris playing AbstractAI. It holds a reference to the tetris
@@ -18,48 +26,122 @@ public class TetrisAI extends AbstractAI {
     public double _BLOCKADE = -0.59;
     public double _CLEAR = 1.6;
 
-    public TetrisAI(TetrisEngine engine) {
-        super(engine);
+    public TetrisAI(ListeningExecutorService executor) {
+        super(executor);
+    }
+    
+    public void MakeItDumb() {
+        _TOUCHING_EDGES = -3.97;
+        _TOUCHING_WALLS = -6.52;
+        _TOUCHING_FLOOR = -0.65;
+        _HEIGHT = +3.78;
+        _HOLES = +2.31;
+        _BLOCKADE = +0.59;
+        _CLEAR = -1.6;
+    }
+
+    private static class GetPossibleFits implements Callable<List<BlockPosition>> {
+        private final TetrisEngine engine;
+        private final Type type;
+
+        public GetPossibleFits(TetrisEngine engine, Type type) {
+            this.engine = engine;
+            this.type = type;
+        }
+
+        @Override
+        public List<BlockPosition> call() throws Exception {
+            return getPossibleFits(engine, type);
+        }
+    }
+
+    private class EvalPosition implements Callable<Double> {
+
+        private final BlockPosition nextPosition;
+        private final BlockPosition curPosition;
+        private final TetrisEngine engine;
+
+        public EvalPosition(TetrisEngine engine, BlockPosition curPosition, BlockPosition nextPosition) {
+            this.engine = engine;
+            this.curPosition = curPosition;
+            this.nextPosition = nextPosition;
+        }
+
+        @Override
+        public Double call() throws Exception {
+            return evalPosition(engine, curPosition, nextPosition);
+        }
+
+    }
+
+    private class ConsumeChoices extends AbstractFuture<BlockPosition> {
+        private double max;
+        private BlockPosition max_b;
+        private final List<BlockPosition> posfits;
+        private final List<BlockPosition> posfits2;
+        private final int length;
+
+        ConsumeChoices(List<BlockPosition> posfits, List<BlockPosition> posfits2, ListenableFuture<Double>[] futures) {
+            this.max = Double.NEGATIVE_INFINITY;
+            this.max_b = null;
+            this.posfits = posfits;
+            this.posfits2 = posfits2;
+            this.length = futures.length - 1;
+            for (int i = 0; i < futures.length; i++) {
+                this.consume(i, futures[i]);
+            }
+        }
+
+        private void consume(final int index, final ListenableFuture<Double> future) {
+            Futures.addCallback(future, new FutureCallback<Double>() {
+                @Override
+                public void onSuccess(Double score) {
+                    if (score >= max) {
+                        max_b = posfits.get(index / posfits2.size());
+                        max = score;
+                    }
+                    if (index == length) {
+                        set(max_b);
+                    }
+                }
+
+                @Override
+                public void onFailure(Throwable thrwbl) {
+                    setException(thrwbl);
+                }
+            }, executor);
+        }
     }
 
     @Override
-    protected BlockPosition computeBestFit(TetrisEngine ge) {
-        List<BlockPosition> posfits = getPossibleFits(ge, ge.activeblock.type);
-        List<BlockPosition> posfits2 = getPossibleFits(ge, ge.nextblock.type);
-
-        // now we begin the evaluation.
-        // for each element in the list we have, calculate a score, and pick
-        // the best.
-        double[] scores = new double[posfits.size() * posfits2.size()];
-
-        for (int i = 0; i < posfits.size(); i++) {
-            for (int j = 0; j < posfits2.size(); j++) {
-                scores[i * posfits2.size() + j] = evalPosition(ge, posfits.get(i), posfits2.get(j));
+    protected ListenableFuture<BlockPosition> computeBestFit(final TetrisEngine engine) {
+        ListenableFuture<List<BlockPosition>>
+                posfitsF = executor.submit(new GetPossibleFits(engine, engine.getActiveblock().type)),
+                posfits2F = executor.submit(new GetPossibleFits(engine, engine.getNextblock().type));
+        return Futures.transform(Futures.allAsList(posfitsF, posfits2F), new AsyncFunction<List<List<BlockPosition>>, BlockPosition>() {
+            @Override
+            public ListenableFuture<BlockPosition> apply(List<List<BlockPosition>> results) {
+                List<BlockPosition> posfits = results.get(0);
+                List<BlockPosition> posfits2 = results.get(1);
+                ListenableFuture<Double>[] futures = new ListenableFuture[posfits.size() * posfits2.size()];
+                for (int i = 0; i < posfits.size(); i++) {
+                    for (int j = 0; j < posfits2.size(); j++) {
+                        int index = i * posfits2.size() + j;
+                        futures[index] = executor.submit(new EvalPosition(engine, posfits.get(i), posfits2.get(j)));
+                    }
+                }
+                return new ConsumeChoices(posfits, posfits2, futures);
             }
-        }
-
-        //retrieve max.
-        double max = Double.NEGATIVE_INFINITY;
-        BlockPosition max_b = null;
-        for (int i = 0; i < scores.length; i++) {
-            if (scores[i] >= max) {
-                max_b = posfits.get(i / posfits2.size());
-                max = scores[i];
-            }
-        }
-
-        // Return final position.
-        return max_b;
+        }, executor);
     }
 
     // Evaluate position not with one, but with two blocks.
     double evalPosition(TetrisEngine ge, BlockPosition p, BlockPosition q) {
-
         // First thing: Simulate the drop. Do this on a mock grid.
         // copying it here may seem like a waste but clearing it
         // after each iteration is too much of a hassle.
         // This copies the grid.
-        byte[][] mockgrid = mockGrid(ge);
+        byte[][] mockgrid = ge.getMockGrid();
 
         int cleared = 0;
         for (int block = 1; block <= 2; block++) {
@@ -74,9 +156,9 @@ public class TetrisAI extends AbstractAI {
             }
 
             if (block == 1) {
-                bl = TetrisEngine.blockdef[ge.activeblock.type.ordinal()][r.rot];
+                bl = TetrisEngine.blockdef[ge.getActiveblock().type.ordinal()][r.rot];
             } else {
-                bl = TetrisEngine.blockdef[ge.nextblock.type.ordinal()][r.rot];
+                bl = TetrisEngine.blockdef[ge.getNextblock().type.ordinal()][r.rot];
             }
 
             // Now we find the fitting HEIGHT by starting from the bottom and

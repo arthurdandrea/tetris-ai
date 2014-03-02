@@ -1,5 +1,7 @@
 package tetris;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -9,17 +11,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import tetris.ProjectConstants.GameState;
 import static tetris.ProjectConstants.getResURL;
-import static tetris.ProjectConstants.sleep_;
-import tetris.ai.AbstractAI;
+import tetris.ai.AIExecutor;
 import tetris.ai.TetrisAI;
 import tetris.generic.Block;
 import tetris.generic.Score;
@@ -30,7 +29,7 @@ import tetris.generic.TetrisEngineListener;
  * TetrisPanel is the panel that contains the (main) panels AKA. core. This also
  * holds most of the objects needed to render the game on a JDesktopPane.
  */
-public class TetrisPanel extends JPanel implements TetrisEngineListener {
+public class TetrisPanel extends JPanel {
 
     //---------------BEGIN PUBLIC VARIABLES---------------//
     /*
@@ -54,7 +53,7 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
     /*
      * AI object controlling the game.
      */
-    public AbstractAI controller = null;
+    public AIExecutor controller = null;
 
     /*
      * Dimensions (Width and HEIGHT) of each square. Squares in Tetris must be
@@ -68,34 +67,27 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
     public int nextblockdim = 18;
 
     private Dimension bounds;
-    private boolean anomaly_flag = false;
     private int lastLines;
     private Timer timer;
 
     /*
      * Public TetrisPanel constructor.
      */
-    public TetrisPanel() {
+    public TetrisPanel() throws IOException {
         //Initialize the TetrisEngine object.
-        engine = new TetrisEngine(this);
-        squaredim = 20;//300 / engine.WIDTH;
+        engine = new TetrisEngine();
+        squaredim = 300 / engine.WIDTH;
         bounds = new Dimension(squaredim * engine.WIDTH, squaredim * engine.HEIGHT);
 
         //This is the bg-image.
-        try {
-            bg = ImageIO.read(getResURL("/image/background.png"));
-            fg = ImageIO.read(getResURL("/image/backlayer.png"));
+        bg = ImageIO.read(getResURL("/image/background.png"));
+        fg = ImageIO.read(getResURL("/image/backlayer.png"));
 
-            // Actually, the background is the actual background plus
-            // the meta image.
-            Image meta = ImageIO.read(getResURL("/image/metalayer.png"));
-            Graphics g = bg.getGraphics();
-            g.drawImage(meta, 0, 0, null);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Cannot load image.");
-        }
+        // Actually, the background is the actual background plus
+        // the meta image.
+        Image meta = ImageIO.read(getResURL("/image/metalayer.png"));
+        Graphics g = bg.getGraphics();
+        g.drawImage(meta, 0, 0, null);
 
         this.timer = new Timer(100, new ActionListener() {
             @Override
@@ -106,67 +98,15 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         this.timer.setInitialDelay(0);
         this.timer.start();
 
-        //Add all these key functions.
-        KeyPressManager kpm = new KeyPressManager();
-        kpm.putKey(KeyEvent.VK_LEFT, new Runnable() {
-            public void run() {
-                TetrisPanel.this.engine.keyleft();
-            }
-        });
-        kpm.putKey(KeyEvent.VK_RIGHT, new Runnable() {
-            public void run() {
-                TetrisPanel.this.engine.keyright();
-            }
-        });
-        kpm.putKey(KeyEvent.VK_DOWN, new Runnable() {
-            public void run() {
-                TetrisPanel.this.engine.keydown();
-            }
-        });
-        kpm.putKey(KeyEvent.VK_SPACE, new Runnable() {
-            public void run() {
-                TetrisPanel.this.engine.keyslam();
-            }
-        });
-        kpm.putKey(KeyEvent.VK_UP, new Runnable() {
-            public void run() {
-                TetrisPanel.this.engine.keyrotate();
-            }
-        });
-        kpm.putKey(KeyEvent.VK_Z, new Runnable() {
-            public void run() {
-                TetrisPanel.this.engine.keyrotate();
-            }
-        });
-        kpm.putKey(KeyEvent.VK_SHIFT, new Runnable() {
-            @Override
-            public void run() {
-                if (engine.getState() != GameState.GAMEOVER && controller != null && !controller.getThread().isAlive()) {
-                    controller.start();
-                }
-                if (engine.getState() == GameState.PAUSED) {
-                    engine.setState(GameState.PLAYING);
-                } else {
-                    engine.setState(GameState.PAUSED);
-                    //System.out.println(controller.thread.isAlive());
-                }
-            }
-        });
+        this.addKeyListener(new KeyPressManager());
+        this.setFocusable(true);
+        this.engine.setState(GameState.PAUSED);
 
-        addKeyListener(kpm);
-
-        //Focus when clicked.
-        addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent me) {
-                TetrisPanel.this.requestFocusInWindow();
-            }
-        });
-
-        setFocusable(true);
-        engine.setState(GameState.PAUSED);
-
-        if (!isHumanControlled) {
-            controller = new TetrisAI(this.engine);
+        if (!this.isHumanControlled) {
+            ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(4));
+            TetrisAI ai = new TetrisAI(executor);
+            //ai.MakeItDumb();
+            this.controller = new AIExecutor(ai, engine, executor);
         }
     }
 
@@ -178,13 +118,9 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         g.drawImage(bg, 0, 0, this);
         //engine.draw(g);
 
-        synchronized (engine) {
-            drawGame(g);
-        }
+        drawGame(g);
         g.drawImage(fg, 0, 0, this);
     }
-    
-    
 
     private void drawGame(Graphics g) {
         //The coordinates of the top left corner of the game board.
@@ -204,11 +140,12 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
         g.drawString(String.format("%03d", score.getLinesRemoved()), 156, 250);//Draw lines
 
         //Loop and draw all the blocks.
-        for (int c1 = 0; c1 < engine.blocks.length; c1++) {
-            for (int c2 = 0; c2 < engine.blocks[c1].length; c2++) {
+        Block[][] blocks = engine.getBlocks();
+        for (int c1 = 0; c1 < blocks.length; c1++) {
+            for (int c2 = 0; c2 < blocks[c1].length; c2++) {
                 // Just in case block's null, it doesn't draw as black.
                 g.setColor(Block.emptycolor);
-                g.setColor(engine.blocks[c1][c2].getColor());
+                g.setColor(blocks[c1][c2].getColor());
 
                 g.fillRect(mainx + c1 * squaredim,
                            mainy + c2 * squaredim, squaredim, squaredim);
@@ -226,8 +163,8 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
 
         //Less typing.
         Block[][] nextb;
-        if (engine.nextblock != null) {
-            nextb = engine.nextblock.array;
+        if (engine.getNextblock() != null) {
+            nextb = engine.getNextblock().array;
             //Loop and draw next block.
             for (int c1 = 0; c1 < nextb.length; c1++) {
                 for (int c2 = 0; c2 < nextb[c1].length; c2++) {
@@ -267,134 +204,45 @@ public class TetrisPanel extends JPanel implements TetrisEngineListener {
 
     }
 
-    @Override
-    public void onGameOver(TetrisEngine engine, Score lastScore) {
-        assert this.engine == engine;
-
-        this.lastLines = lastScore.getLinesRemoved();
-
-        if (this.isHumanControlled) {
-            return;
-        }
-        /*if (!anomaly_flag && ProjectConstants.BASIC_AI) {
-         tetris.genetic.sendScore(lastscore);
-         }*/
-        this.controller.stop();
-        this.controller = new TetrisAI(this.engine);
-
-        this.engine.setState(GameState.PLAYING);
-        this.anomaly_flag = false;
-        this.controller.start();
-    }
-
-    @Override
-    public void onNewBlock(TetrisEngine engine) {
-        assert this.engine == engine;
-    }
-
-    @Override
-    public void onGameStateChange(TetrisEngine engine) {
-
-    }
-
     /*
      * This is a class that manages key presses. It's so that each press is sent
      * once, and if you hold a key, it doesn't count as multiple presses.
      *
      * Note that some keys should never be counted more than once.
      */
-    class KeyPressManager extends KeyAdapter {
-
-        static final int delay = 40;
-
-        class KeyHandlingThread extends Thread {
-
-            volatile boolean flag = true;
-
-            public KeyHandlingThread() {
-                super("KeyHandlingThread");
-            }
-
-            public void run() {
-                // The key handling loop.
-                // Each iteration, call the functions whose keys are currently
-                // being held down.
-
-                while (flag) {
-                    sleep_(delay);
-
-                    //if(keys[0]) keymap.get(KeyEvent.VK_LEFT).run();
-                    //if(keys[1]) keymap.get(KeyEvent.VK_RIGHT).run();
-                    if (keys[2]) {
-                        keymap.get(KeyEvent.VK_DOWN).run();
-                    }
-                }
-            }
-        }
-        KeyHandlingThread keythread;
-        // After some testing: I think that it's best to only have the down button
-        // have special handling.
-        // Lol now I think it's a bit of a waste to have an entire thread running
-        // for one button that's barely used.
-        // Only keys that require special handling:
-        // keys[0]: left
-        // keys[1]: right
-        // keys[2]: down
-        volatile boolean[] keys = {false, false, false};
-
-        KeyPressManager() {
-            keythread = new KeyHandlingThread();
-
-            if (TetrisPanel.this.isHumanControlled) {
-                keythread.start();
-            }
-        }
-
-        void putKey(int i, Runnable r) {
-            keymap.put(i, r);
-        }
-        // This hashmap maps from an Int (from KeyEvent.getKeyCode()) to a
-        // function, represented by a Runnable.
-        Map<Integer, Runnable> keymap = new HashMap<Integer, Runnable>();
-
+    private class KeyPressManager extends KeyAdapter {
         // Called when keypress is detected.
+        @Override
         public void keyPressed(KeyEvent ke) {
-
-            // Make special adjustments for handling of the shift key.
-            if (!TetrisPanel.this.isHumanControlled && ke.getKeyCode() != KeyEvent.VK_SHIFT) {
-                return;
-            }
-
-            int ck = ke.getKeyCode();
-            if (keymap.containsKey(ck)) {
-                /*
-                 * if(ck==KeyEvent.VK_LEFT) keys[0]=true; else
-                 * if(ck==KeyEvent.VK_RIGHT) keys[1]=true;
-                 */
-
-                if (ck == KeyEvent.VK_DOWN) {
-                    keys[2] = true;
-                } else {
-                    keymap.get(ck).run();
-                }
-            }
-        }
-
-        // Called when key is released. Here we'll want to modify the map.
-        public void keyReleased(KeyEvent ke) {
-
-            if (!TetrisPanel.this.isHumanControlled) {
-                return;
-            }
-
-            int ck = ke.getKeyCode();
-
-            /*
-             * if(ck==KeyEvent.VK_LEFT) keys[0]=false; else
-             * if(ck==KeyEvent.VK_RIGHT) keys[1]=false;
-             */
-            if (ck == KeyEvent.VK_DOWN) {
-                keys[2] = false;
+            switch (ke.getKeyCode()) {
+                case KeyEvent.VK_LEFT:
+                    if (isHumanControlled)
+                        engine.keyleft();
+                    break;
+                case KeyEvent.VK_RIGHT:
+                    if (isHumanControlled)
+                        engine.keyright();
+                    break;
+                case KeyEvent.VK_DOWN:
+                    if (isHumanControlled)
+                        engine.keydown();
+                    break;
+                case KeyEvent.VK_SPACE:
+                    if (isHumanControlled)
+                        engine.keyslam();
+                    break;
+                case KeyEvent.VK_UP:
+                case KeyEvent.VK_Z:
+                    if (isHumanControlled)
+                        engine.keyrotate();
+                    break;
+                case KeyEvent.VK_SHIFT:
+                    if (engine.getState() == GameState.PAUSED) {
+                        engine.setState(GameState.PLAYING);
+                    } else {
+                        engine.setState(GameState.PAUSED);
+                    }
+                    break;
             }
         }
     }

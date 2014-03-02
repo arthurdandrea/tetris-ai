@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import tetris.ProjectConstants.GameState;
 
 /*
@@ -12,7 +14,6 @@ import tetris.ProjectConstants.GameState;
  * This class will change variables in the TetrisPanel class.
  */
 public final class TetrisEngine {
-
     //---------------VARIABLES--------------//
     /*
      * Bunch of hardcoded blocks and their rotations. Code them high up in the
@@ -136,21 +137,23 @@ public final class TetrisEngine {
 //</editor-fold>
 
     private List<TetrisEngineListener> listeners;
+    private final ReadWriteLock rwLock;
 
     /*
      * Random object used to generate new blocks.
      */
+    
     private final Random rdm;
 
     /*
      * Primitive representation of active block.
      */
-    public volatile Tetromino activeblock;
+    private volatile Tetromino activeblock;
 
     /*
      * Next block.
      */
-    public volatile Tetromino nextblock;
+    private volatile Tetromino nextblock;
 
     public final int WIDTH = 6;
     public final int HEIGHT = 20;
@@ -160,22 +163,16 @@ public final class TetrisEngine {
      * starting from the top left: blocks[5][3] would be a block 5 left and 3
      * down from (0,0).
      */
-    public Block[][] blocks;
-
-    /*
-     * Score
-     */
+    private Block[][] blocks;
     private Score score;
-
-    /*
-     * Current state of the game (PLAYING, PAUSED, etc.)
-     */
     private GameState state;
 
-    /*
-     * Public constructor. Remember to call startengine() or else this won't do
-     * anything! @param p TetrisPanel.
-     */
+
+    /**
+     * Remember to call startengine() or else this won't do
+     * anything!
+     * @param listener An EngineListener to listen for those Engine actions
+     */    
     public TetrisEngine(TetrisEngineListener listener) {
         this();
         if (listener != null) {
@@ -183,34 +180,69 @@ public final class TetrisEngine {
         }
     }
 
+    /**
+     * Remember to call startengine() or else this won't do
+     * anything!
+     */
     public TetrisEngine() {
+        this.rwLock = new ReentrantReadWriteLock();
         this.listeners = new ArrayList<>();
         this.rdm = new Random();
         this.blocks = new Block[WIDTH][HEIGHT];
+        this.score = new Score();
         this.reset();
     }
 
+    /**
+     * @return the current state of the game
+     */
     public GameState getState() {
         return this.state;
     }
 
     public void setState(GameState newValue) {
-        this.state = newValue;
-        List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
-        for (TetrisEngineListener listener : listenersCopy) {
-            listener.onGameStateChange(this);
+        this.rwLock.writeLock().lock();
+        try {
+            if (this.state == GameState.GAMEOVER) {
+                this.reset();
+                this.step();
+                this.score = new Score();
+            }
+            this.state = newValue;
+
+            List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
+            for (TetrisEngineListener listener : listenersCopy) {
+                listener.onGameStateChange(this);
+            }
+        } finally {
+            this.rwLock.writeLock().unlock();
         }
     }
 
     /**
-     * @return the score
+     * @return the current score of the game
      */
     public Score getScore() {
-        return score;
+        this.rwLock.readLock().lock();
+        try {
+            return score.Clone();
+        } finally {
+            this.rwLock.readLock().unlock();
+        }
+
     }
 
-    public synchronized void addListener(TetrisEngineListener listener) {
+    public void addListener(TetrisEngineListener listener) {
         this.listeners.add(listener);
+    }
+
+    public void removeListener(TetrisEngineListener listener) {
+        this.rwLock.writeLock().lock();
+        try {
+            this.listeners.remove(listener);
+        } finally {
+            this.rwLock.writeLock().unlock();
+        }
     }
 
 
@@ -218,32 +250,41 @@ public final class TetrisEngine {
      * Called when the RIGHT key is pressed.
      */
     public void keyright() {
-        if (activeblock == null || state != GameState.PLAYING) {
-            return;
+        this.rwLock.writeLock().lock();
+        try {
+            if (activeblock == null || state != GameState.PLAYING) {
+                return;
+            }
+
+            activeblock.x++;
+
+            //Failsafe: Revert XPosition.
+            if (!copy()) {
+                activeblock.x--;
+            }
+        } finally {
+            this.rwLock.writeLock().unlock();
         }
-
-        activeblock.x++;
-
-        //Failsafe: Revert XPosition.
-        if (!copy()) {
-            activeblock.x--;
-        }
-
     }
 
     /*
      * Called when the LEFT key is pressed.
      */
     public void keyleft() {
-        if (activeblock == null || state != GameState.PLAYING) {
-            return;
-        }
+        this.rwLock.writeLock().lock();
+        try {
+            if (activeblock == null || state != GameState.PLAYING) {
+                return;
+            }
 
-        activeblock.x--;
+            activeblock.x--;
 
-        //Failsafe: Revert XPosition.
-        if (!copy()) {
-            activeblock.x++;
+            //Failsafe: Revert XPosition.
+            if (!copy()) {
+                activeblock.x++;
+            }
+        } finally {
+            this.rwLock.writeLock().unlock();
         }
     }
 
@@ -251,37 +292,51 @@ public final class TetrisEngine {
      * Called when the DOWN key is pressed.
      */
     public void keydown() {
-        if (activeblock == null || state != GameState.PLAYING) {
-            return;
-        }
+        this.rwLock.writeLock().lock();
+        try {
+            if (state != GameState.PLAYING) {
+                return;
+            }
+            //if (activeblock == null || state != GameState.PLAYING) {
+            //    return;
+            //}
 
-        step();
+            step();
+        } finally {
+            this.rwLock.writeLock().unlock();
+        }
     }
 
     /*
      * Called when rotate key is called (Z or UP)
      */
     public void keyrotate() {
-        if (activeblock == null || activeblock.array == null || state != GameState.PLAYING) {
-            return;
-        }
+        this.rwLock.writeLock().lock();
+        try {
 
-        Block[][] lastblock = copy2D(activeblock.array);
-        int lastrot = activeblock.rot;
+            if (activeblock == null || activeblock.array == null || state != GameState.PLAYING) {
+                return;
+            }
 
-        //Next rotation in array.
-        if (activeblock.rot == blockdef[activeblock.type.ordinal()].length - 1) {
-            activeblock.rot = 0;
-        } else {
-            activeblock.rot++;
-        }
+            Block[][] lastblock = copy2D(activeblock.array);
+            int lastrot = activeblock.rot;
 
-        activeblock.array = toBlock2D(blockdef[activeblock.type.ordinal()][activeblock.rot]);
+            //Next rotation in array.
+            if (activeblock.rot == blockdef[activeblock.type.ordinal()].length - 1) {
+                activeblock.rot = 0;
+            } else {
+                activeblock.rot++;
+            }
 
-        //Failsafe revert.
-        if (!copy()) {
-            activeblock.array = lastblock;
-            activeblock.rot = lastrot;
+            activeblock.array = toBlock2D(blockdef[activeblock.type.ordinal()][activeblock.rot]);
+
+            //Failsafe revert.
+            if (!copy()) {
+                activeblock.array = lastblock;
+                activeblock.rot = lastrot;
+            }
+        } finally {
+            this.rwLock.writeLock().unlock();
         }
     }
 
@@ -289,22 +344,25 @@ public final class TetrisEngine {
      * Called when slam key (SPACE) is pressed.
      */
     public void keyslam() {
-        if (activeblock == null || state != GameState.PLAYING) {
-            return;
-        }
-
-        //This will game over pretty damn fast!
-        if (activeblock.array == null) {
-            newblock();
-        }
-
-        while (true) {
-            activeblock.y++;
-
-            if (!copy()) {
-                donecurrent();
+        this.rwLock.writeLock().lock();
+        try {
+            if (activeblock == null || state != GameState.PLAYING) {
                 return;
             }
+            //This will game over pretty damn fast!
+            if (activeblock.array == null) {
+                newblock();
+            }
+            while (true) {
+                activeblock.y++;
+
+                if (!copy()) {
+                    donecurrent();
+                    return;
+                }
+            }
+        } finally {
+            this.rwLock.writeLock().unlock();
         }
     }
 
@@ -322,14 +380,17 @@ public final class TetrisEngine {
      * Should be called AFTER swing initialization. This is so the first block
      * doesn't appear halfway down the screen.
      */
-    public synchronized void startengine() {
+    public void startengine() {
         this.step();
     }
 
     /*
-     * Resets the blocks but keeps everything else.
+     * Fully resets everything.
      */
-    public synchronized void clear() {
+    private void reset() {
+        this.activeblock = null;
+        this.nextblock = null;
+
         for (int i = 0; i < blocks.length; i++) {
             for (int j = 0; j < blocks[i].length; j++) {
                 blocks[i][j] = new Block(Block.EMPTY);
@@ -338,58 +399,26 @@ public final class TetrisEngine {
     }
 
     /*
-     * Fully resets everything.
-     */
-    public synchronized void reset() {
-        this.score = new Score();
-        this.activeblock = null;
-        this.nextblock = null;
-
-        this.clear();
-    }
-
-    /*
      * Done the current block; plays the FALL sound and changes all active
      * blocks to filled.
      */
-    private synchronized void donecurrent() {
-        for (int i = 0; i < blocks.length; i++) {
-            for (int r = 0; r < blocks[i].length; r++) {
-                if (blocks[i][r].getState() == Block.ACTIVE) {
-                    blocks[i][r].setState(Block.FILLED);
+    private void donecurrent() {
+        for (Block[] blocks : this.blocks) {
+            for (Block block : blocks) {
+                if (block.getState() == Block.ACTIVE) {
+                    block.setState(Block.FILLED);
                 }
             }
         }
-
         checkforclears();//Moving this here.
-    }
-
-    /*
-     * Called when Game Over (Blocks stacked so high that copy() fails)
-     */
-    public synchronized void gameover() {
-        //Check first.
-        if (this.state == GameState.GAMEOVER) {
-            return;
-        }
-
-        this.setState(GameState.GAMEOVER);
-        Score lastscore = getScore();
-        this.reset();
-        List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
-        for (TetrisEngineListener listener : listenersCopy) {
-            listener.onGameOver(this, lastscore);
-        }
     }
 
     /*
      * Copies the position of the active block into the abstract block grid.
      * Returns false if a block already exists under it, true otherwise.
      *
-     * This method isn't very efficient. Thus, it must be
-     * synchronized.
      */
-    private synchronized boolean copy() {
+    private boolean copy() {
         if (activeblock == null || activeblock.array == null) {
             return false;
         }
@@ -403,9 +432,9 @@ public final class TetrisEngine {
                 int xi = x + i;
                 int yr = y + r;
 
-                if (activeblock.array[r][i].getState() == Block.ACTIVE && 
-                        (xi >= WIDTH || yr >= HEIGHT ||
-                        blocks[xi][yr].getState() == Block.FILLED)) {
+                if (activeblock.array[r][i].getState() == Block.ACTIVE
+                        && (xi < 0 || yr < 0 || xi >= WIDTH || yr >= HEIGHT
+                        || blocks[xi][yr].getState() == Block.FILLED)) {
                     return false;
                 }
             }
@@ -441,41 +470,36 @@ public final class TetrisEngine {
     /*
      * Steps into the next phase if possible.
      */
-    public synchronized void step() {
-        if (activeblock == null) {//step() gives you a random block if none is available.
+    public void step() {
+        if (this.activeblock == null) {//step() gives you a random block if none is available.
             newblock();
-
             return;
         }
 
         //move 1 down.
-        activeblock.y++;
+        this.activeblock.y++;
 
-        if (!copy()) {
-            donecurrent();
+        if (!this.copy()) {
+            this.donecurrent();
         }
 
     }
 
-    /*
-     * Runs the checkforclears() on a seperate thread. Also performs the fade
-     * out effect.
-     */
-    private synchronized void checkforclears() {
+    private void checkforclears() {
         //Threading fix?
-        activeblock = null;
+        this.activeblock = null;
 
         //Don't care about fading
         //Now actually remove the blocks.
-        checkforclears(0);
-        newblock();
+        this.checkforclears(0);
+        this.newblock();
     }
 
     /*
      * As expected this function checks whether there are any clears. Uses
      * recursion if more than one line can be cleared. Don't run this on the EDT!
      */
-    private synchronized void checkforclears(int alreadycleared) {
+    private void checkforclears(int alreadycleared) {
         int whichline = -1;
         int old = alreadycleared;
 
@@ -517,7 +541,7 @@ public final class TetrisEngine {
     /*
      * Generates a random block , in a random rotation.
      */
-    private synchronized void newblock() {
+    private void newblock() {
         // Check:
         if (activeblock != null) {
             return;
@@ -533,22 +557,17 @@ public final class TetrisEngine {
         nextblock = getRandBlock();
 
         if (!copy()) {
-            gameover();
+            this.setState(GameState.GAMEOVER);
         }
 
         //Bonus?
         score.addDroppedBlock();
-
-        List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
-        for (TetrisEngineListener listener : listenersCopy) {
-            listener.onNewBlock(this);
-        }
     }
 
     /*
      * Create and return a random block.
      */
-    private synchronized Tetromino getRandBlock() {
+    private Tetromino getRandBlock() {
         int blockType = rdm.nextInt(blockdef.length);
         int rotation = blockdef[blockType].length == 1 ? 0 : rdm.nextInt(blockdef[blockType].length);
 
@@ -575,13 +594,17 @@ public final class TetrisEngine {
     /*
      * Copies an array, but runs in n^2 time.
      */
-    static Block[][] copy2D(Block[][] in) {
+    public static Block[][] copy2D(Block[][] in) {
         //if(in == null) return null;
         Block[][] ret = new Block[in.length][in[0].length];
 
         for (int i = 0; i < in.length; i++) {
             for (int j = 0; j < in[0].length; j++) {
-                ret[i][j] = in[i][j].clone();
+                if (in[i][j] == null) {
+                    ret[i][j] = null;
+                } else {
+                    ret[i][j] = in[i][j].clone();
+                }
             }
         }
 
@@ -591,7 +614,7 @@ public final class TetrisEngine {
     /*
      * Function to convert byte[][] to Block[][]
      */
-    static Block[][] toBlock2D(byte[][] b) {
+    public static Block[][] toBlock2D(byte[][] b) {
         if (b == null) {
             return null;
         }
@@ -613,7 +636,7 @@ public final class TetrisEngine {
     /*
      * Function to convert Block[][] to byte[][]
      */
-    static byte[][] toByte2D(Block[][] b) {
+    public static byte[][] toByte2D(Block[][] b) {
         if (b == null) {
             return null;
         }
@@ -625,5 +648,60 @@ public final class TetrisEngine {
         }
 
         return ret;
+    }
+
+    /**
+     * @return the blocks
+     */
+    public Block[][] getBlocks() {
+        this.rwLock.readLock().lock();
+        try {
+            return copy2D(blocks);
+        } finally {
+            this.rwLock.readLock().unlock();
+        }
+    }
+    
+    public byte[][] getMockGrid() {
+        this.rwLock.readLock().lock();
+        try {
+            byte[][] mockgrid = new byte[WIDTH][HEIGHT];
+            for (int i = 0; i < WIDTH; i++) {
+                for (int j = 0; j < HEIGHT; j++) {
+                    byte s = (byte) blocks[i][j].getState();
+                    if (s == 2) {
+                        s = 0;
+                    }
+                    mockgrid[i][j] = s;
+                }
+            }
+            return mockgrid;
+        } finally {
+            this.rwLock.readLock().unlock();
+        }
+    }
+
+    /**
+     * @return the activeblock
+     */
+    public Tetromino getActiveblock() {
+        this.rwLock.readLock().lock();
+        try {
+            return activeblock.clone();
+        } finally {
+            this.rwLock.readLock().unlock();
+        }
+    }
+
+    /**
+     * @return the nextblock
+     */
+    public Tetromino getNextblock() {
+        this.rwLock.readLock().lock();
+        try {
+            return nextblock.clone();
+        } finally {
+            this.rwLock.readLock().unlock();
+        }
     }
 }

@@ -8,7 +8,6 @@ import java.awt.Color;
 public class Tetromino implements Cloneable {
 
     public enum Type {
-
         Long, Box, L, J, T, S, Z
     }
     private static final Type[] TypeValues = Type.values();
@@ -24,12 +23,12 @@ public class Tetromino implements Cloneable {
     /*
      * Position, rotation, type, etc
      */
-    public volatile int x, y, rot;
-    public volatile Type type;
+    public int x, y, rot;
+    public Type type;
     /*
      * Color.
      */
-    public volatile Color color;
+    public Color color;
 
     /*
      * Copy.

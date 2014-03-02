@@ -10,7 +10,7 @@ package tetris.generic;
  *
  * @author arthur
  */
-public class Score implements Cloneable {
+public class Score {
     private int score;
 
     /*
@@ -74,8 +74,7 @@ public class Score implements Cloneable {
         this.score += 1;
     }
 
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
+    public Score Clone() {
         Score newScore = new Score();
         newScore.blocksDropped = this.blocksDropped;
         newScore.linesRemoved = this.linesRemoved;
