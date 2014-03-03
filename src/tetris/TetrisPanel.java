@@ -23,7 +23,7 @@ import tetris.ai.TetrisAI;
 import tetris.generic.Block;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
-import tetris.generic.TetrisEngineListener;
+import tetris.generic.Tetromino;
 
 /*
  * TetrisPanel is the panel that contains the (main) panels AKA. core. This also
@@ -66,9 +66,24 @@ public class TetrisPanel extends JPanel {
      */
     public int nextblockdim = 18;
 
-    private Dimension bounds;
+    private final Dimension bounds;
     private int lastLines;
-    private Timer timer;
+    private final Timer timer;
+
+    public static final Color[] colors = {
+        new Color(0, 0, 0, 220),
+        new Color(0, 0, 0, 205),
+        new Color(0, 0, 0, 190),
+        new Color(0, 0, 0, 165),
+        new Color(0, 0, 0, 140),
+        new Color(0, 0, 0, 125),
+        new Color(0, 0, 0, 110)
+    };
+    
+    /*
+     * Color of an empty block.
+     */
+    public static final Color emptycolor = new Color(120, 120, 190, 90);
 
     /*
      * Public TetrisPanel constructor.
@@ -76,7 +91,7 @@ public class TetrisPanel extends JPanel {
     public TetrisPanel() throws IOException {
         //Initialize the TetrisEngine object.
         engine = new TetrisEngine();
-        squaredim = 300 / engine.WIDTH;
+        squaredim = 20;//300 / engine.WIDTH;
         bounds = new Dimension(squaredim * engine.WIDTH, squaredim * engine.HEIGHT);
 
         //This is the bg-image.
@@ -123,59 +138,49 @@ public class TetrisPanel extends JPanel {
     }
 
     private void drawGame(Graphics g) {
-        //The coordinates of the top left corner of the game board.
-        int mainx = (this.getWidth() - bounds.width) / 2 + 50;
-        int mainy = (this.getHeight() - bounds.height) / 2;
+        Dimension size = this.getSize();
+        Score score = this.engine.getScore();
+        Tetromino nextblock = engine.getNextblock();
 
-        //Create a border;
+        // The coordinates of the top left corner of the game board.
+        int mainx = (size.width - bounds.width) / 2 + 50;
+        int mainy = (size.height - bounds.height) / 2;
+
+        // Create a border;
         g.setColor(Color.BLACK);
-        g.drawRect(mainx - 1, mainy - 1,
-                   bounds.width + 2, bounds.height + 2);
+        g.drawRect(mainx - 1, mainy - 1, bounds.width + 2,
+                                         bounds.height + 2);
 
         g.setColor(Color.BLACK);
         g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18));
 
-        Score score = engine.getScore();
-        g.drawString(String.format("%06d", score.getScore()), 156, 213);//Draw score
-        g.drawString(String.format("%03d", score.getLinesRemoved()), 156, 250);//Draw lines
+        // Draw score
+        g.drawString(String.format("%06d", score.getScore()), 156, 213);
+        // Draw lines
+        g.drawString(String.format("%03d", score.getLinesRemoved()), 156, 250);
 
-        //Loop and draw all the blocks.
-        Block[][] blocks = engine.getBlocks();
-        for (int c1 = 0; c1 < blocks.length; c1++) {
-            for (int c2 = 0; c2 < blocks[c1].length; c2++) {
-                // Just in case block's null, it doesn't draw as black.
-                g.setColor(Block.emptycolor);
-                g.setColor(blocks[c1][c2].getColor());
-
-                g.fillRect(mainx + c1 * squaredim,
-                           mainy + c2 * squaredim, squaredim, squaredim);
-
-                //Draw square borders.
-                g.setColor(new Color(255, 255, 255, 25));
-                g.drawRect(mainx + c1 * squaredim,
-                           mainy + c2 * squaredim, squaredim, squaredim);
-
-            }
-        }
+        // Loop and draw all the blocks.
+        this.draw(g, engine.getBlocks(), mainx, mainy);
 
         int nextx = 134;
         int nexty = 336;
 
-        //Less typing.
-        Block[][] nextb;
-        if (engine.getNextblock() != null) {
-            nextb = engine.getNextblock().array;
+        if (nextblock != null) {
+            Block[][] nextb = nextblock.array;
+            Color color = nextblock.type == null ?
+                    emptycolor : colors[nextblock.type.ordinal()];
             //Loop and draw next block.
-            for (int c1 = 0; c1 < nextb.length; c1++) {
-                for (int c2 = 0; c2 < nextb[c1].length; c2++) {
-                    Color c = nextb[c2][c1].getColor();
-
-                    if (c != null && !c.equals(Block.emptycolor)) {
-                        g.setColor(new Color(0, 0, 0, 128));
-
-                        g.fillRect(nextx + c1 * nextblockdim,
-                                   nexty + c2 * nextblockdim, nextblockdim, nextblockdim);
+            for (int i = 0; i < nextb.length; i++) {
+                for (int j = 0; j < nextb[i].length; j++) {
+                    if (nextb[i][j].getState() != Block.EMPTY) {
+                        g.setColor(color);
+                        g.fillRect(nextx + i * nextblockdim,
+                                   nexty + j * nextblockdim, nextblockdim, nextblockdim);
                     }
+                    // Draw square borders.
+                    g.setColor(new Color(255, 255, 255, 25));
+                    g.drawRect(nextx + i * nextblockdim,
+                               nexty + j * nextblockdim, nextblockdim, nextblockdim);
                 }
             }
         }
@@ -183,13 +188,11 @@ public class TetrisPanel extends JPanel {
         if (engine.getState() == GameState.PAUSED || engine.getState() == GameState.GAMEOVER) {
             g.setColor(new Color(255, 255, 255, 160));
             g.setFont(new Font(Font.SERIF, Font.BOLD, 16));
-            String pausestring = null;
+            String pausestring;
 
             if (engine.getState() == GameState.PAUSED) {
                 pausestring = "(SHIFT to play).";
-            }
-
-            if (engine.getState() == GameState.GAMEOVER) {
+            } else { // if (engine.getState() == GameState.GAMEOVER)
                 if (this.isHumanControlled) {
                     pausestring = "Game over (SHIFT to restart).";
                 } else {
@@ -198,10 +201,27 @@ public class TetrisPanel extends JPanel {
                 }
             }
 
-            g.drawString(pausestring,
-                         (this.getWidth() - g.getFontMetrics().stringWidth(pausestring)) / 2 + 50, 300);
+            g.drawString(pausestring, (this.getWidth() - g.getFontMetrics().stringWidth(pausestring)) / 2 + 50, 300);
         }
+    }
 
+    private void draw(Graphics g, Block[][] blocks, int x, int y) {
+        for (int i = 0; i < blocks.length; i++) {
+            for (int j = 0; j < blocks[i].length; j++) {
+                // Just in case block's null, it doesn't draw as black.
+                g.setColor(blocks[i][j].type == null ?
+                        emptycolor : colors[blocks[i][j].type.ordinal()]);
+                
+                g.fillRect(x + i * squaredim,
+                        y + j * squaredim, squaredim, squaredim);
+                
+                //Draw square borders.
+                g.setColor(new Color(255, 255, 255, 25));
+                g.drawRect(x + i * squaredim,
+                        y + j * squaredim, squaredim, squaredim);
+                
+            }
+        }
     }
 
     /*

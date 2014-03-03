@@ -1,74 +1,32 @@
 package tetris.generic;
 
-import java.awt.Color;
 
 /*
  * More concrete representation of a block.
  */
 public class Block implements Cloneable {
-
-    public static final Color[] colors = {
-        new Color(0, 0, 0, 220),
-        new Color(0, 0, 0, 205),
-        new Color(0, 0, 0, 190),
-        new Color(0, 0, 0, 165),
-        new Color(0, 0, 0, 140),
-        new Color(0, 0, 0, 125),
-        new Color(0, 0, 0, 110)
-    };
     public static final int EMPTY = 0, FILLED = 1, ACTIVE = 2;
-    /*
-     * Color of an empty block.
-     */
-    public static final Color emptycolor
-            = new Color(120, 120, 190, 90);
+
     /*
      * State of the block.
      */
     private volatile int state = EMPTY;
-    /*
-     * Color of the block.
-     */
-    private volatile Color color = emptycolor;
 
-    /*
-     * Null constructor.
-     */
-    public Block() {
-    }
+    public Tetromino.Type type;
 
     /*
      * Initializing constructor.
      */
-    public Block(int s) {
-        state = s;
-    }
-
-    /*
-     * String representation of this object.
-     */
-    public String toString() {
-        return color.toString();
-    }
-
-    /*
-     * Compares the state for equality.
-     */
-    public boolean equals(Object o) {
-        if (!(o instanceof Block)) {
-            return false;
-        }
-        Block b = (Block) o;
-        return b.state == state;
+    public Block(int state, Tetromino.Type type) {
+        this.state = state;
+        this.type = type;
     }
 
     /*
      * Implements the Clonable interface.
      */
     public Block clone() {
-        Block ret = new Block(state);
-        ret.setColor(color);
-        return ret;
+        return new Block(state, type);
     }
 
     public byte toByte() {
@@ -88,13 +46,5 @@ public class Block implements Cloneable {
 
     public void setState(int state) {
         this.state = state;
-    }
-
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
     }
 }

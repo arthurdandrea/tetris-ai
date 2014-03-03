@@ -1,6 +1,5 @@
 package tetris.generic;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -328,7 +327,7 @@ public final class TetrisEngine {
                 activeblock.rot++;
             }
 
-            activeblock.array = toBlock2D(blockdef[activeblock.type.ordinal()][activeblock.rot]);
+            activeblock.array = toBlock2D(blockdef[activeblock.type.ordinal()][activeblock.rot], activeblock.type);
 
             //Failsafe revert.
             if (!copy()) {
@@ -393,7 +392,7 @@ public final class TetrisEngine {
 
         for (int i = 0; i < blocks.length; i++) {
             for (int j = 0; j < blocks[i].length; j++) {
-                blocks[i][j] = new Block(Block.EMPTY);
+                blocks[i][j] = new Block(Block.EMPTY, null);
             }
         }
     }
@@ -446,7 +445,7 @@ public final class TetrisEngine {
             for (int r = 0; r < HEIGHT; r++) {
                 if (buffer[i][r].getState() == Block.ACTIVE) {
                     buffer[i][r].setState(Block.EMPTY);
-                    buffer[i][r].setColor(Block.emptycolor);
+                    buffer[i][r].type = null;
                 }
             }
         }
@@ -455,10 +454,10 @@ public final class TetrisEngine {
         for (int i = 0; i < 4; i++) {
             for (int r = 0; r < 4; r++) {
                 if (activeblock.array[i][r].getState() == Block.ACTIVE) {
-                    buffer[x + r][y + i].setState(Block.ACTIVE);
-
-                    //facepalm.
-                    buffer[x + r][y + i].setColor(activeblock.color);
+                    int xr = x + r;
+                    int yi = y + i;
+                    buffer[xr][yi].setState(Block.ACTIVE);
+                    buffer[xr][yi].type = activeblock.type;
                 }
             }
         }
@@ -574,20 +573,11 @@ public final class TetrisEngine {
         Tetromino ret = new Tetromino();
         ret.rot = rotation;
         ret.setType(blockType);
-        ret.array = toBlock2D(blockdef[blockType][rotation]);
+        ret.array = toBlock2D(blockdef[blockType][rotation], ret.type);
 
         ret.x = WIDTH / 2 - 2;
         ret.y = 0;
 
-        Color bcolor = Block.colors[blockType];
-        ret.color = bcolor;
-        for (Block[] lineOfBlocks : ret.array) {
-            for (Block block : lineOfBlocks) {
-                if (block.getState() == Block.ACTIVE) {
-                    block.setColor(ret.color);
-                }
-            }
-        }
         return ret;
     }
 
@@ -614,7 +604,7 @@ public final class TetrisEngine {
     /*
      * Function to convert byte[][] to Block[][]
      */
-    public static Block[][] toBlock2D(byte[][] b) {
+    public static Block[][] toBlock2D(byte[][] b, Tetromino.Type type) {
         if (b == null) {
             return null;
         }
@@ -623,10 +613,10 @@ public final class TetrisEngine {
             for (int j = 0; j < b[0].length; j++) {
                 switch (b[i][j]) {
                 case 1:
-                    ret[i][j] = new Block(Block.ACTIVE);
+                    ret[i][j] = new Block(Block.ACTIVE, type);
                     break;
                 default:
-                    ret[i][j] = new Block(Block.EMPTY);
+                    ret[i][j] = new Block(Block.EMPTY, type);
                 }
             }
         }

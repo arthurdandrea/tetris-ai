@@ -7,13 +7,10 @@ public class BlockPosition {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj == null) {
+        if (obj == null || !(obj instanceof BlockPosition)) {
             return false;
         }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final BlockPosition other = (BlockPosition) obj;
+        BlockPosition other = (BlockPosition) obj;
         if (this.bx != other.bx) {
             return false;
         }
