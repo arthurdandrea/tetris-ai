@@ -19,9 +19,8 @@ public final class TetrisEngine {
      * array so that when you get a new one it appears in the highest spot 
      * possible.
      */
-    //<editor-fold defaultstate="collapsed" desc="blockdef">
     public static final byte[][][][] blockdef = {{
-        // 0 = I block.
+    // 0 = I block.
         {
             {1, 1, 1, 1},
             {0, 0, 0, 0},
@@ -133,57 +132,32 @@ public final class TetrisEngine {
             {0, 0, 0, 0}
         }
     }};
-//</editor-fold>
 
-    private List<TetrisEngineListener> listeners;
+    public final int WIDTH;
+    public final int HEIGHT;
     private final ReadWriteLock rwLock;
-
-    /*
-     * Random object used to generate new blocks.
-     */
-    
     private final Random rdm;
 
-    /*
-     * Primitive representation of active block.
-     */
-    private volatile Tetromino activeblock;
-
-    /*
-     * Next block.
-     */
-    private volatile Tetromino nextblock;
-
-    public final int WIDTH = 6;
-    public final int HEIGHT = 20;
-
-    /*
-     * DBlock array representation of the gamefield. Blocks are counted X first
-     * starting from the top left: blocks[5][3] would be a block 5 left and 3
-     * down from (0,0).
-     */
     private Block[][] blocks;
     private Score score;
     private GameState state;
+    private List<TetrisEngineListener> listeners;
+    private Tetromino activeblock;
+    private Tetromino nextblock;
 
-
-    /**
-     * Remember to call startengine() or else this won't do
-     * anything!
-     * @param listener An EngineListener to listen for those Engine actions
-     */    
-    public TetrisEngine(TetrisEngineListener listener) {
-        this();
-        if (listener != null) {
-            this.listeners.add(listener);
-        }
+    public TetrisEngine() {
+        this(6, 20);
     }
 
     /**
      * Remember to call startengine() or else this won't do
      * anything!
+     * @param width
+     * @param height
      */
-    public TetrisEngine() {
+    public TetrisEngine(int width, int height) {
+        this.WIDTH = width;
+        this.HEIGHT = height;
         this.rwLock = new ReentrantReadWriteLock();
         this.listeners = new ArrayList<>();
         this.rdm = new Random();
