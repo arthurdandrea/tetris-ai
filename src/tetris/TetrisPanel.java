@@ -48,7 +48,7 @@ public class TetrisPanel extends JPanel {
     /*
      * Is it being controlled by a human or ai?
      */
-    public boolean isHumanControlled = false;
+    public boolean isHumanControlled = true;
 
     /*
      * AI object controlling the game.
@@ -70,25 +70,33 @@ public class TetrisPanel extends JPanel {
     private int lastLines;
     private final Timer timer;
 
-    public static final Color[] colors = {
-        new Color(0, 0, 0, 220),
-        new Color(0, 0, 0, 205),
-        new Color(0, 0, 0, 190),
-        new Color(0, 0, 0, 165),
-        new Color(0, 0, 0, 140),
-        new Color(0, 0, 0, 125),
-        new Color(0, 0, 0, 110)
-    };
-    
-    /*
-     * Color of an empty block.
-     */
-    public static final Color emptycolor = new Color(120, 120, 190, 90);
+    public static final ColorTheme colorTheme1 = ColorTheme.create()
+            .set(Tetromino.Type.Long, new Color(0, 0, 0, 220))
+            .set(Tetromino.Type.Box, new Color(0, 0, 0, 205))
+            .set(Tetromino.Type.L, new Color(0, 0, 0, 190))
+            .set(Tetromino.Type.J, new Color(0, 0, 0, 165))
+            .set(Tetromino.Type.T, new Color(0, 0, 0, 140))
+            .set(Tetromino.Type.S, new Color(0, 0, 0, 125))
+            .set(Tetromino.Type.Z, new Color(0, 0, 0, 110))
+            .setEmpty(new Color(120, 120, 190, 90))
+            .finish();
+    public static final ColorTheme colorTheme2 = ColorTheme.create()
+            .set(Tetromino.Type.Long, new Color(102, 102, 204))
+            .set(Tetromino.Type.Box, new Color(204, 102, 204))
+            .set(Tetromino.Type.L, new Color(102, 204, 204))
+            .set(Tetromino.Type.J, new Color(218, 170, 0))
+            .set(Tetromino.Type.T, new Color(204, 204, 102))
+            .set(Tetromino.Type.S, new Color(102, 204, 102))
+            .set(Tetromino.Type.Z, new Color(204, 102, 102))
+            .setEmpty(Color.WHITE)
+            .finish();
+    private final ColorTheme theme;
 
     /*
      * Public TetrisPanel constructor.
      */
     public TetrisPanel() throws IOException {
+        theme = colorTheme1;
         //Initialize the TetrisEngine object.
         engine = new TetrisEngine();
         squaredim = 20;//300 / engine.WIDTH;
@@ -128,7 +136,7 @@ public class TetrisPanel extends JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g); //To change body of generated methods, choose Tools | Templates.
-        
+
         //Draw: background, then main, then foreground.
         g.drawImage(bg, 0, 0, this);
         //engine.draw(g);
@@ -149,7 +157,7 @@ public class TetrisPanel extends JPanel {
         // Create a border;
         g.setColor(Color.BLACK);
         g.drawRect(mainx - 1, mainy - 1, bounds.width + 2,
-                                         bounds.height + 2);
+                   bounds.height + 2);
 
         g.setColor(Color.BLACK);
         g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 18));
@@ -167,8 +175,7 @@ public class TetrisPanel extends JPanel {
 
         if (nextblock != null) {
             Block[][] nextb = nextblock.array;
-            Color color = nextblock.type == null ?
-                    emptycolor : colors[nextblock.type.ordinal()];
+            Color color = theme.getColor(nextblock.type);
             //Loop and draw next block.
             for (int i = 0; i < nextb.length; i++) {
                 for (int j = 0; j < nextb[i].length; j++) {
@@ -209,17 +216,16 @@ public class TetrisPanel extends JPanel {
         for (int i = 0; i < blocks.length; i++) {
             for (int j = 0; j < blocks[i].length; j++) {
                 // Just in case block's null, it doesn't draw as black.
-                g.setColor(blocks[i][j].type == null ?
-                        emptycolor : colors[blocks[i][j].type.ordinal()]);
-                
+                g.setColor(theme.getColor(blocks[i][j].type));
+
                 g.fillRect(x + i * squaredim,
-                        y + j * squaredim, squaredim, squaredim);
-                
+                           y + j * squaredim, squaredim, squaredim);
+
                 //Draw square borders.
                 g.setColor(new Color(255, 255, 255, 25));
                 g.drawRect(x + i * squaredim,
-                        y + j * squaredim, squaredim, squaredim);
-                
+                           y + j * squaredim, squaredim, squaredim);
+
             }
         }
     }
@@ -231,38 +237,44 @@ public class TetrisPanel extends JPanel {
      * Note that some keys should never be counted more than once.
      */
     private class KeyPressManager extends KeyAdapter {
+
         // Called when keypress is detected.
         @Override
         public void keyPressed(KeyEvent ke) {
             switch (ke.getKeyCode()) {
-                case KeyEvent.VK_LEFT:
-                    if (isHumanControlled)
-                        engine.keyleft();
-                    break;
-                case KeyEvent.VK_RIGHT:
-                    if (isHumanControlled)
-                        engine.keyright();
-                    break;
-                case KeyEvent.VK_DOWN:
-                    if (isHumanControlled)
-                        engine.keydown();
-                    break;
-                case KeyEvent.VK_SPACE:
-                    if (isHumanControlled)
-                        engine.keyslam();
-                    break;
-                case KeyEvent.VK_UP:
-                case KeyEvent.VK_Z:
-                    if (isHumanControlled)
-                        engine.keyrotate();
-                    break;
-                case KeyEvent.VK_SHIFT:
-                    if (engine.getState() == GameState.PAUSED) {
-                        engine.setState(GameState.PLAYING);
-                    } else {
-                        engine.setState(GameState.PAUSED);
-                    }
-                    break;
+            case KeyEvent.VK_LEFT:
+                if (isHumanControlled) {
+                    engine.keyleft();
+                }
+                break;
+            case KeyEvent.VK_RIGHT:
+                if (isHumanControlled) {
+                    engine.keyright();
+                }
+                break;
+            case KeyEvent.VK_DOWN:
+                if (isHumanControlled) {
+                    engine.keydown();
+                }
+                break;
+            case KeyEvent.VK_SPACE:
+                if (isHumanControlled) {
+                    engine.keyslam();
+                }
+                break;
+            case KeyEvent.VK_UP:
+            case KeyEvent.VK_Z:
+                if (isHumanControlled) {
+                    engine.keyrotate();
+                }
+                break;
+            case KeyEvent.VK_SHIFT:
+                if (engine.getState() == GameState.PAUSED) {
+                    engine.setState(GameState.PLAYING);
+                } else {
+                    engine.setState(GameState.PAUSED);
+                }
+                break;
             }
         }
     }
