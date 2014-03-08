@@ -133,8 +133,6 @@ public final class TetrisEngine {
         }
     }};
 
-    public final int WIDTH;
-    public final int HEIGHT;
     private final ReadWriteLock rwLock;
     private final Random rdm;
 
@@ -158,12 +156,10 @@ public final class TetrisEngine {
      */
     public TetrisEngine(int width, int height) {
         this.defs = new TetrisGameDefinitions(width, height);
-        this.WIDTH = width;
-        this.HEIGHT = height;
         this.rwLock = new ReentrantReadWriteLock();
         this.listeners = new ArrayList<>();
         this.rdm = new Random();
-        this.blocks = new Block[WIDTH][HEIGHT];
+        this.blocks = new Block[this.defs.width][this.defs.height];
         this.score = new Score();
         this.reset();
     }
@@ -288,7 +284,6 @@ public final class TetrisEngine {
     public void keyrotate() {
         this.rwLock.writeLock().lock();
         try {
-
             if (activeblock == null || activeblock.array == null || state != GameState.PLAYING) {
                 return;
             }
@@ -408,7 +403,7 @@ public final class TetrisEngine {
                 int yr = y + r;
 
                 if (activeblock.array[r][i].getState() == Block.ACTIVE
-                        && (xi < 0 || yr < 0 || xi >= WIDTH || yr >= HEIGHT
+                        && (xi < 0 || yr < 0 || xi >= this.defs.width || yr >= this.defs.height
                         || blocks[xi][yr].getState() == Block.FILLED)) {
                     return false;
                 }
@@ -417,8 +412,8 @@ public final class TetrisEngine {
         Block[][] buffer = copy2D(blocks);
 
         //First remove all active blocks.
-        for (int i = 0; i < WIDTH; i++) {
-            for (int r = 0; r < HEIGHT; r++) {
+        for (int i = 0; i < this.defs.width; i++) {
+            for (int r = 0; r < this.defs.height; r++) {
                 if (buffer[i][r].getState() == Block.ACTIVE) {
                     buffer[i][r].setState(Block.EMPTY);
                     buffer[i][r].type = null;
@@ -481,8 +476,8 @@ public final class TetrisEngine {
         //Loops to find any row that has every block filled.
         // If one block is not filled, the loop breaks.
         ML:
-        for (int i = HEIGHT - 1; i >= 0; i--) {
-            for (int y = 0; y < WIDTH; y++) {
+        for (int i = this.defs.height - 1; i >= 0; i--) {
+            for (int y = 0; y < this.defs.width; y++) {
                 if (!(blocks[y][i].getState() == Block.FILLED)) {
                     continue ML;
                 }
@@ -551,7 +546,7 @@ public final class TetrisEngine {
         ret.setType(blockType);
         ret.array = toBlock2D(blockdef[blockType][rotation], ret.type);
 
-        ret.x = WIDTH / 2 - 2;
+        ret.x = this.defs.width / 2 - 2;
         ret.y = 0;
 
         return ret;
@@ -631,9 +626,9 @@ public final class TetrisEngine {
     public byte[][] getMockGrid() {
         this.rwLock.readLock().lock();
         try {
-            byte[][] mockgrid = new byte[WIDTH][HEIGHT];
-            for (int i = 0; i < WIDTH; i++) {
-                for (int j = 0; j < HEIGHT; j++) {
+            byte[][] mockgrid = new byte[this.defs.width][this.defs.height];
+            for (int i = 0; i < this.defs.width; i++) {
+                for (int j = 0; j < this.defs.height; j++) {
                     byte s = (byte) blocks[i][j].getState();
                     if (s == 2) {
                         s = 0;

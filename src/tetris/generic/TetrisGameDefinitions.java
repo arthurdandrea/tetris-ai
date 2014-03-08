@@ -20,7 +20,6 @@ package tetris.generic;
 import com.google.common.collect.Iterators;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import tetris.ai.AbstractAI;
 import tetris.ai.BlockPosition;
 
 /**
