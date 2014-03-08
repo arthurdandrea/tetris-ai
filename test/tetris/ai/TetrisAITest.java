@@ -17,47 +17,52 @@
 
 package tetris.ai;
 
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import org.junit.After;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.hamcrest.Matcher;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
+import org.hamcrest.collection.IsIterableContainingInOrder;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import tetris.ProjectConstants;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
+import tetris.generic.Tetromino;
+import tetris.util.ExecutorServiceRule;
 
 /**
  *
  * @author arthur
  */
 public class TetrisAITest {
+    @Rule
+    public ExecutorServiceRule executorRule = new ExecutorServiceRule(Executors.newScheduledThreadPool(4));
+
+    public ListeningScheduledExecutorService executor;
+
     private TetrisAI ai;
     private TetrisEngine engine;
-    private ListeningExecutorService executor;
 
     @Before
     public void setUp() {
+        executor = executorRule.get();
+
         engine = new TetrisEngine();
-        executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(4));
         ai = new TetrisAI(executor);
         engine.startengine();
         engine.setState(ProjectConstants.GameState.PLAYING);
     }
     
-    @After
-    public void tearDown() throws InterruptedException {
-        executor.shutdown();
-        executor.awaitTermination(1, TimeUnit.SECONDS);
-    }
-
     @Test
     public void testProcess() throws InterruptedException, ExecutionException {
         int i;

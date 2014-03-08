@@ -144,6 +144,7 @@ public final class TetrisEngine {
     private List<TetrisEngineListener> listeners;
     private Tetromino activeblock;
     private Tetromino nextblock;
+    public final TetrisGameDefinitions defs;
 
     public TetrisEngine() {
         this(6, 20);
@@ -156,6 +157,7 @@ public final class TetrisEngine {
      * @param height
      */
     public TetrisEngine(int width, int height) {
+        this.defs = new TetrisGameDefinitions(width, height);
         this.WIDTH = width;
         this.HEIGHT = height;
         this.rwLock = new ReentrantReadWriteLock();

@@ -1,9 +1,17 @@
 package tetris.ai;
 
 public class BlockPosition {
+    public final byte bx;
+    public final byte rot;
 
-    byte bx;
-    byte rot;
+    public BlockPosition(int bx, int rot) {
+        this((byte) bx, (byte) rot);
+    }
+
+    public BlockPosition(byte bx, byte rot) {
+        this.bx = bx;
+        this.rot = rot;
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -11,10 +19,7 @@ public class BlockPosition {
             return false;
         }
         BlockPosition other = (BlockPosition) obj;
-        if (this.bx != other.bx) {
-            return false;
-        }
-        return this.rot == other.rot;
+        return this.bx == other.bx && this.rot == other.rot;
     }
 
     @Override
