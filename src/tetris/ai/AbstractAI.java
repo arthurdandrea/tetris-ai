@@ -10,26 +10,6 @@ import tetris.generic.TetrisEngine;
 import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {
-    protected final ListeningExecutorService executor;
-
-    public AbstractAI(ListeningExecutorService executor) {
-        this.executor = executor;
-    }
-
-    protected abstract ListenableFuture<BlockPosition> computeBestFit(TetrisEngine engine);
-        
-    public ListenableFuture<Void> process(final TetrisEngine engine) {
-        if (engine.getState() != GameState.PLAYING) {
-            return Futures.immediateFuture(null);
-        }
-        return Futures.transform(this.computeBestFit(engine), new Function<BlockPosition, Void>() {
-            @Override
-            public Void apply(BlockPosition temp) {
-                movehere(engine, temp);
-                return null;
-            }
-        });
-    }
 
     protected static void movehere(TetrisEngine engine, BlockPosition position) {
         Objects.requireNonNull(engine);
@@ -70,5 +50,25 @@ public abstract class AbstractAI {
             }
         }
         engine.keyslam();
+    }
+    protected final ListeningExecutorService executor;
+
+    public AbstractAI(ListeningExecutorService executor) {
+        this.executor = executor;
+    }
+
+    protected abstract ListenableFuture<BlockPosition> computeBestFit(TetrisEngine engine);
+        
+    public ListenableFuture<Void> process(final TetrisEngine engine) {
+        if (engine.getState() != GameState.PLAYING) {
+            return Futures.immediateFuture(null);
+        }
+        return Futures.transform(this.computeBestFit(engine), new Function<BlockPosition, Void>() {
+            @Override
+            public Void apply(BlockPosition temp) {
+                movehere(engine, temp);
+                return null;
+            }
+        });
     }
 }

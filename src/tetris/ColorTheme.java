@@ -25,16 +25,16 @@ import tetris.generic.Tetromino;
  * @author arthur
  */
 public class ColorTheme {
+    
+    public static ColorThemeRegister create() {
+        return new ColorThemeRegister();
+    }
     public final Color[] colors;
     public final Color emptyColor;
 
     private ColorTheme(Color[] colors, Color emptyColor) {
         this.colors = colors;
         this.emptyColor = emptyColor;
-    }
-    
-    public static ColorThemeRegister create() {
-        return new ColorThemeRegister();
     }
     
     public Color getColor(Tetromino.Type type) {

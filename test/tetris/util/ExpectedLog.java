@@ -69,34 +69,12 @@ public class ExpectedLog implements TestRule {
         }
     }
 
-    private class ExpectedLogStatement extends Statement {
-        private final Statement base;
-        
-        public ExpectedLogStatement(Statement base) {
-            this.base = base;
-        }
-
-        @Override
-        public void evaluate() throws Throwable {
-            MemoryHandler memory = new MemoryHandler();
-            logger.addHandler(memory);
-            try {
-                this.base.evaluate();
-            } finally {
-                logger.removeHandler(memory);
-                memory.close();
-            }
-            check(memory);
-        }
-    }
-    
     private static class MemoryHandler extends Handler {
         public final List<LogRecord> records;
         
-        public MemoryHandler() {
+        MemoryHandler() {
             this.records = new ArrayList<>();
         }
-
         @Override
         public void publish(LogRecord record) {
             records.add(record);
@@ -110,6 +88,26 @@ public class ExpectedLog implements TestRule {
         @Override
         public void close() throws SecurityException {
             
+        }
+    }
+    
+    private class ExpectedLogStatement extends Statement {
+        private final Statement base;
+        
+        ExpectedLogStatement(Statement base) {
+            this.base = base;
+        }
+        @Override
+        public void evaluate() throws Throwable {
+            MemoryHandler memory = new MemoryHandler();
+            logger.addHandler(memory);
+            try {
+                this.base.evaluate();
+            } finally {
+                logger.removeHandler(memory);
+                memory.close();
+            }
+            check(memory);
         }
         
     }

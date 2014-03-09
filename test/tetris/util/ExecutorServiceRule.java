@@ -52,7 +52,7 @@ public class ExecutorServiceRule implements TestRule {
     private class StatementImpl extends Statement {
         private final Statement base;
         
-        public StatementImpl(Statement base) {
+        StatementImpl(Statement base) {
             this.base = base;
         }
 

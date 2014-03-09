@@ -27,6 +27,35 @@ import tetris.ai.BlockPosition;
  * @author Arthur D'Andréa Alemar
  */
 public class TetrisGameDefinitions {
+
+    private static FreeSpaces calculateFreeSpaces(byte[][] in) {
+        // It's free if all of them are zero, and their sum is zero.
+        boolean[] column = new boolean[4];
+        for (int j = 0; j < 4; j++) {
+            column[j] = true;
+            for (int i = 0; i < 4; i++) {
+                if (in[i][j] != 0) {
+                    column[j] = false;
+                    break;
+                }
+            }
+        }
+        int freeOnLeft = 0;
+        for (int i = 0; i < 4; i++) {
+            if (!column[i]) {
+                break;
+            }
+            freeOnLeft++;
+        }
+        int freeOnRight = 0;
+        for (int i = 3; i >= 0; i--) {
+            if (!column[i]) {
+                break;
+            }
+            freeOnRight++;
+        }
+        return new FreeSpaces(freeOnLeft, freeOnRight);
+    }
     public final int height;
     public final int width;
     private final FreeSpaces[][] freeSpaces;
@@ -66,35 +95,6 @@ public class TetrisGameDefinitions {
         }
     }
 
-    private static FreeSpaces calculateFreeSpaces(byte[][] in) {
-        // It's free if all of them are zero, and their sum is zero.
-        boolean[] column = new boolean[4];
-        for (int j = 0; j < 4; j++) {
-            column[j] = true;
-            for (int i = 0; i < 4; i++) {
-                if (in[i][j] != 0) {
-                    column[j] = false;
-                    break;
-                }
-            }
-        }
-        int freeOnLeft = 0;
-        for (int i = 0; i < 4; i++) {
-            if (!column[i]) {
-                break;
-            }
-            freeOnLeft++;
-        }
-        int freeOnRight = 0;
-        for (int i = 3; i >= 0; i--) {
-            if (!column[i]) {
-                break;
-            }
-            freeOnRight++;
-        }
-        return new FreeSpaces(freeOnLeft, freeOnRight);
-    }
-
     // List of all the possible fits.
     private static class GetPossibleFits implements Iterator<BlockPosition> {
         private final TetrisGameDefinitions definitions;
@@ -105,7 +105,7 @@ public class TetrisGameDefinitions {
         private int currX;
         private boolean end;
 
-        public GetPossibleFits(TetrisGameDefinitions definitions, Tetromino.Type type) {
+        GetPossibleFits(TetrisGameDefinitions definitions, Tetromino.Type type) {
             this.definitions = definitions;
             this.rotations = definitions.getFreeSpaces(type);
             

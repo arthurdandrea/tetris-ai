@@ -42,7 +42,7 @@ public class CachedIterator<T> implements Iterable<T> {
     private class It implements Iterator<T> {
         private int position;
 
-        public It() {
+        It() {
             position = 0;
         }
 

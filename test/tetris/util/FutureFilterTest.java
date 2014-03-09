@@ -141,7 +141,7 @@ public class FutureFilterTest {
     private static class GreaterThan implements Predicate<Integer> {
         private final int top;
 
-        public GreaterThan(int top) {
+        GreaterThan(int top) {
             this.top = top;
         }
 

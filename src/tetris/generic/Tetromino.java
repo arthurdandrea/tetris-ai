@@ -7,13 +7,6 @@ import java.util.Random;
  * Object representation of a tetromino.
  */
 public final class Tetromino implements Cloneable {
-    public enum Type {
-        Long, Box, L, J, T, S, Z;
-        
-        public static Type getRandom(Random random) {
-            return Type.values()[random.nextInt(Type.values().length)];
-        }
-    }
 
     public Block[][] array;
     public int x, y, rot;
@@ -71,5 +64,12 @@ public final class Tetromino implements Cloneable {
     public String toString() {
         return String.format("Tetromino[type:%s,x=%d,y=%d,rot=%d]",
                              this.type, this.x, this.y, this.rot);
+    }
+    public enum Type {
+        Long, Box, L, J, T, S, Z;
+        
+        public static Type getRandom(Random random) {
+            return Type.values()[random.nextInt(Type.values().length)];
+        }
     }
 }

@@ -33,9 +33,6 @@ import tetris.util.functional.SubmitFunction;
  * @author Arthur D'Andréa Alemar
  */
 public class FutureExtremes<F> extends FutureConsumer<F, F> {
-    public enum Extreme {
-        MIN, MAX
-    }
     
     public static <F extends Comparable> ListenableFuture<F> calculate(Iterator<ListenableFuture<F>> iterator, Executor executor, Extreme direction) {
         return calculate(iterator, executor, (Comparator<F>) Ordering.natural(), direction);
@@ -111,5 +108,8 @@ public class FutureExtremes<F> extends FutureConsumer<F, F> {
     @Override
     protected F getResult() {
         return this.current;
+    }
+    public enum Extreme {
+        MIN, MAX
     }
 }

@@ -31,9 +31,9 @@ import java.util.logging.Logger;
  * @author Arthur D'Andréa Alemar
  */
 abstract class FutureConsumer<F, T> {
+    private static final Logger logger = Logger.getLogger(FutureConsumer.class.getName());
     private final SettableFuture<?> finalFuture;
     private final SettableFuture<T> future;
-    private static final Logger logger = Logger.getLogger(FutureConsumer.class.getName());
 
     private int length;
     private boolean haveEnded;

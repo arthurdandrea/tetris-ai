@@ -133,6 +133,65 @@ public final class TetrisEngine {
         }
     }};
 
+    /*
+     * Copies an array, but runs in n^2 time.
+     */
+    public static Block[][] copy2D(Block[][] in) {
+        //if(in == null) return null;
+        Block[][] ret = new Block[in.length][in[0].length];
+
+        for (int i = 0; i < in.length; i++) {
+            for (int j = 0; j < in[0].length; j++) {
+                if (in[i][j] == null) {
+                    ret[i][j] = null;
+                } else {
+                    ret[i][j] = in[i][j].clone();
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    /*
+     * Function to convert byte[][] to Block[][]
+     */
+    public static Block[][] toBlock2D(byte[][] b, Tetromino.Type type) {
+        if (b == null) {
+            return null;
+        }
+        Block[][] ret = new Block[b.length][b[0].length];
+        for (int i = 0; i < b.length; i++) {
+            for (int j = 0; j < b[0].length; j++) {
+                switch (b[i][j]) {
+                case 1:
+                    ret[i][j] = new Block(Block.ACTIVE, type);
+                    break;
+                default:
+                    ret[i][j] = new Block(Block.EMPTY, type);
+                }
+            }
+        }
+        return ret;
+    }
+
+    /*
+     * Function to convert Block[][] to byte[][]
+     */
+    public static byte[][] toByte2D(Block[][] b) {
+        if (b == null) {
+            return null;
+        }
+        byte[][] ret = new byte[b.length][b[0].length];
+        for (int i = 0; i < b.length; i++) {
+            for (int j = 0; j < b[0].length; j++) {
+                ret[i][j] = b[i][j].toByte();
+            }
+        }
+
+        return ret;
+    }
+
     private final ReadWriteLock rwLock;
     private final Random rdm;
 
@@ -525,65 +584,6 @@ public final class TetrisEngine {
         Tetromino ret = new Tetromino(blockType, rotation);
         ret.x = this.defs.width / 2 - 2;
         ret.y = 0;
-        return ret;
-    }
-
-    /*
-     * Copies an array, but runs in n^2 time.
-     */
-    public static Block[][] copy2D(Block[][] in) {
-        //if(in == null) return null;
-        Block[][] ret = new Block[in.length][in[0].length];
-
-        for (int i = 0; i < in.length; i++) {
-            for (int j = 0; j < in[0].length; j++) {
-                if (in[i][j] == null) {
-                    ret[i][j] = null;
-                } else {
-                    ret[i][j] = in[i][j].clone();
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    /*
-     * Function to convert byte[][] to Block[][]
-     */
-    public static Block[][] toBlock2D(byte[][] b, Tetromino.Type type) {
-        if (b == null) {
-            return null;
-        }
-        Block[][] ret = new Block[b.length][b[0].length];
-        for (int i = 0; i < b.length; i++) {
-            for (int j = 0; j < b[0].length; j++) {
-                switch (b[i][j]) {
-                case 1:
-                    ret[i][j] = new Block(Block.ACTIVE, type);
-                    break;
-                default:
-                    ret[i][j] = new Block(Block.EMPTY, type);
-                }
-            }
-        }
-        return ret;
-    }
-
-    /*
-     * Function to convert Block[][] to byte[][]
-     */
-    public static byte[][] toByte2D(Block[][] b) {
-        if (b == null) {
-            return null;
-        }
-        byte[][] ret = new byte[b.length][b[0].length];
-        for (int i = 0; i < b.length; i++) {
-            for (int j = 0; j < b[0].length; j++) {
-                ret[i][j] = b[i][j].toByte();
-            }
-        }
-
         return ret;
     }
 

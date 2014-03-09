@@ -38,36 +38,6 @@ public class TetrisAI extends AbstractAI {
         _BLOCKADE = +0.59;
         _CLEAR = -1.6;
     }
-
-    private class EvalPosition implements Function<Pair<BlockPosition>, BestFit> {
-        private final TetrisEngine engine;
-
-        public EvalPosition(TetrisEngine engine) {
-            this.engine = engine;
-        }
-
-        @Override
-        public BestFit apply(Pair<BlockPosition> pair) {
-            return evalPosition(engine, pair.first, pair.second);
-        }
-    }
-
-    private static class BestFit implements Comparable<BestFit> {
-        public final BlockPosition first;
-        public final BlockPosition second;
-        public final double score;
-
-        public BestFit(BlockPosition first, BlockPosition second, double score) {
-            this.first = first;
-            this.second = second;
-            this.score = score;
-        }
-
-        @Override
-        public int compareTo(BestFit o) {
-            return Double.compare(score, o.score);
-        }
-    }
     
     @Override
     protected ListenableFuture<BlockPosition> computeBestFit(final TetrisEngine engine) {
@@ -289,5 +259,35 @@ public class TetrisAI extends AbstractAI {
          */
         //System.exit(0);
         return new BestFit(position1, position2, score);
+    }
+
+    private static class BestFit implements Comparable<BestFit> {
+        public final BlockPosition first;
+        public final BlockPosition second;
+        public final double score;
+
+        BestFit(BlockPosition first, BlockPosition second, double score) {
+            this.first = first;
+            this.second = second;
+            this.score = score;
+        }
+
+        @Override
+        public int compareTo(BestFit o) {
+            return Double.compare(score, o.score);
+        }
+    }
+
+    private class EvalPosition implements Function<Pair<BlockPosition>, BestFit> {
+        private final TetrisEngine engine;
+
+        EvalPosition(TetrisEngine engine) {
+            this.engine = engine;
+        }
+
+        @Override
+        public BestFit apply(Pair<BlockPosition> pair) {
+            return evalPosition(engine, pair.first, pair.second);
+        }
     }
 }

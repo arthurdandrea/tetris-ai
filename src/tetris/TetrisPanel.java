@@ -31,6 +31,27 @@ import tetris.generic.Tetromino;
  */
 public class TetrisPanel extends JPanel {
 
+    public static final ColorTheme colorTheme1 = ColorTheme.create()
+            .set(Tetromino.Type.Long, new Color(0, 0, 0, 220))
+            .set(Tetromino.Type.Box, new Color(0, 0, 0, 205))
+            .set(Tetromino.Type.L, new Color(0, 0, 0, 190))
+            .set(Tetromino.Type.J, new Color(0, 0, 0, 165))
+            .set(Tetromino.Type.T, new Color(0, 0, 0, 140))
+            .set(Tetromino.Type.S, new Color(0, 0, 0, 125))
+            .set(Tetromino.Type.Z, new Color(0, 0, 0, 110))
+            .setEmpty(new Color(120, 120, 190, 90))
+            .finish();
+    public static final ColorTheme colorTheme2 = ColorTheme.create()
+            .set(Tetromino.Type.Long, new Color(102, 102, 204))
+            .set(Tetromino.Type.Box, new Color(204, 102, 204))
+            .set(Tetromino.Type.L, new Color(102, 204, 204))
+            .set(Tetromino.Type.J, new Color(218, 170, 0))
+            .set(Tetromino.Type.T, new Color(204, 204, 102))
+            .set(Tetromino.Type.S, new Color(102, 204, 102))
+            .set(Tetromino.Type.Z, new Color(204, 102, 102))
+            .setEmpty(Color.WHITE)
+            .finish();
+
     //---------------BEGIN PUBLIC VARIABLES---------------//
     /*
      * Public reference to the TetrisEngine object.
@@ -69,27 +90,6 @@ public class TetrisPanel extends JPanel {
     private final Dimension bounds;
     private int lastLines;
     private final Timer timer;
-
-    public static final ColorTheme colorTheme1 = ColorTheme.create()
-            .set(Tetromino.Type.Long, new Color(0, 0, 0, 220))
-            .set(Tetromino.Type.Box, new Color(0, 0, 0, 205))
-            .set(Tetromino.Type.L, new Color(0, 0, 0, 190))
-            .set(Tetromino.Type.J, new Color(0, 0, 0, 165))
-            .set(Tetromino.Type.T, new Color(0, 0, 0, 140))
-            .set(Tetromino.Type.S, new Color(0, 0, 0, 125))
-            .set(Tetromino.Type.Z, new Color(0, 0, 0, 110))
-            .setEmpty(new Color(120, 120, 190, 90))
-            .finish();
-    public static final ColorTheme colorTheme2 = ColorTheme.create()
-            .set(Tetromino.Type.Long, new Color(102, 102, 204))
-            .set(Tetromino.Type.Box, new Color(204, 102, 204))
-            .set(Tetromino.Type.L, new Color(102, 204, 204))
-            .set(Tetromino.Type.J, new Color(218, 170, 0))
-            .set(Tetromino.Type.T, new Color(204, 204, 102))
-            .set(Tetromino.Type.S, new Color(102, 204, 102))
-            .set(Tetromino.Type.Z, new Color(204, 102, 102))
-            .setEmpty(Color.WHITE)
-            .finish();
     private final ColorTheme theme;
 
     /*

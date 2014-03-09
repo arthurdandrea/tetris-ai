@@ -31,7 +31,6 @@ import tetris.generic.TetrisEngineListener;
  * @author arthur
  */
 public class AIExecutor {
-    private enum State {STOPED, RUNNING};
 
     private State state;
     private final ListeningExecutorService executor;
@@ -52,6 +51,7 @@ public class AIExecutor {
             this.executor.submit(new AiExecutorRunnable());
         }
     }
+    private enum State {STOPED, RUNNING};
     
     private class AiExecutorRunnable implements Runnable, FutureCallback<Void> {
         @Override
@@ -81,7 +81,7 @@ public class AIExecutor {
 
     private class TetrisEngineListenerImpl implements TetrisEngineListener {
 
-        public TetrisEngineListenerImpl() {
+        TetrisEngineListenerImpl() {
         }
 
         @Override
