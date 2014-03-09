@@ -100,7 +100,7 @@ public class TetrisPanel extends JPanel {
         //Initialize the TetrisEngine object.
         engine = new TetrisEngine();
         squaredim = 20;//300 / engine.WIDTH;
-        bounds = new Dimension(squaredim * engine.WIDTH, squaredim * engine.HEIGHT);
+        bounds = new Dimension(squaredim * engine.defs.width, squaredim * engine.defs.height);
 
         //This is the bg-image.
         bg = ImageIO.read(getResURL("/image/background.png"));
