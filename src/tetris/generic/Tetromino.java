@@ -1,38 +1,61 @@
 package tetris.generic;
 
-import java.awt.Color;
+import java.util.Objects;
+import java.util.Random;
 
 /*
  * Object representation of a tetromino.
  */
-public class Tetromino implements Cloneable {
-
+public final class Tetromino implements Cloneable {
     public enum Type {
-        Long, Box, L, J, T, S, Z
+        Long, Box, L, J, T, S, Z;
+        
+        public static Type getRandom(Random random) {
+            return Type.values()[random.nextInt(Type.values().length)];
+        }
     }
-    private static final Type[] TypeValues = Type.values();
 
-    void setType(int rnd1) {
-        this.type = TypeValues[rnd1];
-    }
-
-    /*
-     * Contents (Block array)
-     */
     public Block[][] array;
-    /*
-     * Position, rotation, type, etc
-     */
     public int x, y, rot;
     public Type type;
-    /*
-     * Color.
-     */
-    public Color color;
 
-    /*
-     * Copy.
-     */
+    private Tetromino() {
+        this.x = 0;
+        this.y = 0;
+    }
+
+    public Tetromino(Type blockType, int rotation) {
+        this();
+        
+        Objects.requireNonNull(blockType);
+        byte[][][] blockdef = TetrisEngine.blockdef[blockType.ordinal()];
+        if (rotation < 0 || rotation >= blockdef.length) {
+            throw new IndexOutOfBoundsException("rotation is out of bounds");
+        }
+
+        this.type = blockType;
+        this.rot = rotation;
+        this.array = TetrisEngine.toBlock2D(blockdef[this.rot], this.type);
+    }
+    
+    public Tetromino rotate() {
+        byte[][][] blockdef = TetrisEngine.blockdef[this.type.ordinal()];
+        if (blockdef.length == 1) {
+            return this;
+        }
+        Tetromino other = new Tetromino();
+        other.x = this.x;
+        other.y = this.y;
+        other.type = this.type;
+        if (this.rot == blockdef.length - 1) {
+            other.rot = 0;
+        } else {
+            other.rot = this.rot + 1;
+        }
+        other.array = TetrisEngine.toBlock2D(blockdef[other.rot], this.type);
+        return other;
+    }
+
     @Override
     public Tetromino clone() {
         Tetromino ret = new Tetromino();
@@ -41,32 +64,12 @@ public class Tetromino implements Cloneable {
         ret.y = y;
         ret.rot = rot;
         ret.type = type;
-        ret.color = color;
         return ret;
     }
 
-    /*
-     * String representation.
-     */
     @Override
     public String toString() {
-        switch (type) {
-            case Long:
-                return "Long";
-            case Box:
-                return "Box";
-            case L:
-                return "L";
-            case J:
-                return "J";
-            case T:
-                return "T";
-            case S:
-                return "S";
-            case Z:
-                return "Z";
-            default:
-                return "NULL";
-        }
+        return String.format("Tetromino[type:%s,x=%d,y=%d,rot=%d]",
+                             this.type, this.x, this.y, this.rot);
     }
 }

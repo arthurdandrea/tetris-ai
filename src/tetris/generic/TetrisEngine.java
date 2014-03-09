@@ -288,22 +288,14 @@ public final class TetrisEngine {
                 return;
             }
 
-            Block[][] lastblock = copy2D(activeblock.array);
-            int lastrot = activeblock.rot;
-
-            //Next rotation in array.
-            if (activeblock.rot == blockdef[activeblock.type.ordinal()].length - 1) {
-                activeblock.rot = 0;
-            } else {
-                activeblock.rot++;
+            Tetromino lastBlock = activeblock;
+            activeblock = lastBlock.rotate();
+            if (activeblock == lastBlock) {
+                return;
             }
-
-            activeblock.array = toBlock2D(blockdef[activeblock.type.ordinal()][activeblock.rot], activeblock.type);
-
             //Failsafe revert.
             if (!copy()) {
-                activeblock.array = lastblock;
-                activeblock.rot = lastrot;
+                activeblock = lastBlock;
             }
         } finally {
             this.rwLock.writeLock().unlock();
@@ -512,43 +504,34 @@ public final class TetrisEngine {
      * Generates a random block , in a random rotation.
      */
     private void newblock() {
-        // Check:
-        if (activeblock != null) {
-            return;
+        assert this.activeblock == null;
+
+        if (this.nextblock == null) {
+            this.nextblock = this.getRandBlock();
         }
-        if (nextblock == null) {
-            nextblock = getRandBlock();
-        }
+        /* Next block becomes the active block
+           next block gets randomly generated */
+        this.activeblock = this.nextblock.clone();
+        this.nextblock = this.getRandBlock();
 
-        //Next block becomes this block.
-        activeblock = nextblock.clone();
-
-        //Generate random block.
-        nextblock = getRandBlock();
-
-        if (!copy()) {
+        if (!this.copy()) {
             this.setState(GameState.GAMEOVER);
         }
-
-        //Bonus?
-        score.addDroppedBlock();
+        this.score.addDroppedBlock();
     }
 
     /*
      * Create and return a random block.
      */
     private Tetromino getRandBlock() {
-        int blockType = rdm.nextInt(blockdef.length);
-        int rotation = blockdef[blockType].length == 1 ? 0 : rdm.nextInt(blockdef[blockType].length);
-
-        Tetromino ret = new Tetromino();
-        ret.rot = rotation;
-        ret.setType(blockType);
-        ret.array = toBlock2D(blockdef[blockType][rotation], ret.type);
-
+        Tetromino.Type blockType = Tetromino.Type.getRandom(rdm);
+        int rotation = 0;
+        if (blockdef[blockType.ordinal()].length == 1) {
+            rotation = rdm.nextInt(blockdef[blockType.ordinal()].length);
+        }
+        Tetromino ret = new Tetromino(blockType, rotation);
         ret.x = this.defs.width / 2 - 2;
         ret.y = 0;
-
         return ret;
     }
 
