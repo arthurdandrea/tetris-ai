@@ -353,8 +353,8 @@ public final class TetrisEngine {
         this.activeblock = null;
         this.nextblock = null;
 
-        for (int i = 0; i < blocks.length; i++) {
-            for (int j = 0; j < blocks[i].length; j++) {
+        for (int i = 0; i < this.defs.width; i++) {
+            for (int j = 0; j < this.defs.height; j++) {
                 blocks[i][j] = new Block(Block.EMPTY, null);
             }
         }
