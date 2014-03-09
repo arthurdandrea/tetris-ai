@@ -4,14 +4,9 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Objects;
 import tetris.ProjectConstants.GameState;
 import tetris.generic.TetrisEngine;
-import tetris.generic.TetrisGameDefinitions;
-import tetris.generic.TetrisGameDefinitions.FreeSpaces;
 import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {
@@ -30,46 +25,48 @@ public abstract class AbstractAI {
         return Futures.transform(this.computeBestFit(engine), new Function<BlockPosition, Void>() {
             @Override
             public Void apply(BlockPosition temp) {
-                if (temp != null) {
-                    int elx = temp.bx;
-                    int erot = temp.rot;
-                    movehere(engine, elx, erot);
-                }
+                movehere(engine, temp);
                 return null;
             }
         });
     }
 
-    protected static void movehere(TetrisEngine engine, int finx, int finrot) {
-        // we're going to make another failsafe here: if at any time we rotate it
-        // or move it and it doesn't move then it's stuck and we give up.
-        int init_state = engine.getActiveblock().rot;
+    protected static void movehere(TetrisEngine engine, BlockPosition position) {
+        Objects.requireNonNull(engine);
+        Objects.requireNonNull(position);
+
+        /* we're going to make another failsafe here: if at any time we rotate
+           it or move it and it doesn't move then it's stuck and we give up. */
+        Tetromino activeblock = engine.getActiveblock();
+        int init_state = activeblock.rot;
         int prev_state = init_state;
-        while (engine.getActiveblock().rot != finrot) {
+        while (activeblock.rot != position.rot) {
             // Rotate first so we don't get stuck in the edges.
             engine.keyrotate();
-            // Now wait.
-            if (prev_state == engine.getActiveblock().rot || init_state == engine.getActiveblock().rot) {
+            activeblock = engine.getActiveblock(); // refresh activeblock
+            // Now check if it worked
+            if (prev_state == activeblock.rot || init_state == activeblock.rot) {
                 engine.keyslam();
                 return;
             } else {
-                prev_state = engine.getActiveblock().rot;
-
+                prev_state = activeblock.rot;
             }
         }
-        prev_state = engine.getActiveblock().x;
-        while (engine.getActiveblock().x != finx) {
-            //Now nudge the block.
-            if (engine.getActiveblock().x < finx) {
+        prev_state = activeblock.x;
+        while (activeblock.x != position.bx) {
+            // Now nudge the block.
+            if (activeblock.x < position.bx) {
                 engine.keyright();
-            } else if (engine.getActiveblock().x > finx) {
+            } else if (activeblock.x > position.bx) {
                 engine.keyleft();
             }
-            if (prev_state == engine.getActiveblock().x) {
+            activeblock = engine.getActiveblock(); // refresh activeblock
+            // Now check if it worked
+            if (prev_state == activeblock.x) {
                 engine.keyslam();
                 return;
             } else {
-                prev_state = engine.getActiveblock().x;
+                prev_state = activeblock.x;
             }
         }
         engine.keyslam();
