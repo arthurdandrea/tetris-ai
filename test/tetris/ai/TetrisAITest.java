@@ -17,19 +17,9 @@
 
 package tetris.ai;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
-import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import org.hamcrest.Matcher;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.equalTo;
-import org.hamcrest.collection.IsIterableContainingInOrder;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,7 +27,6 @@ import org.junit.Test;
 import tetris.ProjectConstants;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
-import tetris.generic.Tetromino;
 import tetris.util.ExecutorServiceRule;
 
 /**

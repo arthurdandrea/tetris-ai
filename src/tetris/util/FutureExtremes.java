@@ -17,7 +17,6 @@
 
 package tetris.util;
 
-import tetris.util.functional.SubmitFunction;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
@@ -27,6 +26,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.Executor;
+import tetris.util.functional.SubmitFunction;
 
 /**
  *

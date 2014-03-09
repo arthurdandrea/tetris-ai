@@ -17,10 +17,11 @@
 
 package tetris.generic;
 
-import static org.hamcrest.Matchers.*;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.assertThat;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import tetris.generic.Tetromino.Type;
 

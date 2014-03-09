@@ -17,7 +17,6 @@
 
 package tetris.util.functional;
 
-import tetris.util.functional.CartesianProduct;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;

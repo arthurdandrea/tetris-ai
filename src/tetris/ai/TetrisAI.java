@@ -6,9 +6,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.Iterator;
 import tetris.generic.TetrisEngine;
+import tetris.util.FutureExtremes;
 import tetris.util.functional.CartesianProduct;
 import tetris.util.functional.CartesianProduct.Pair;
-import tetris.util.FutureExtremes;
 
 /*
  * This is the default tetris playing AbstractAI. It holds a reference to the tetris
