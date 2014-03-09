@@ -372,7 +372,13 @@ public final class TetrisEngine {
                 }
             }
         }
-        checkforclears();//Moving this here.
+        // Threading fix?
+        this.activeblock = null;
+
+        // Don't care about fading
+        // Now actually remove the blocks.
+        this.checkforclears();
+        this.newblock();
     }
 
     /*
@@ -447,56 +453,43 @@ public final class TetrisEngine {
 
     }
 
-    private void checkforclears() {
-        //Threading fix?
-        this.activeblock = null;
-
-        //Don't care about fading
-        //Now actually remove the blocks.
-        this.checkforclears(0);
-        this.newblock();
-    }
-
     /*
-     * As expected this function checks whether there are any clears. Uses
-     * recursion if more than one line can be cleared. Don't run this on the EDT!
+     * As expected this function checks whether there are any clears.
      */
-    private void checkforclears(int alreadycleared) {
+    private void checkforclears() {
         int whichline = -1;
-        int old = alreadycleared;
+        int clearedLines = 0;
+        int old;
+        do {
+            old = clearedLines;
+            
+            // Loops to find any row that has every block filled.
+            // If one block is not filled, the loop breaks.
+            ML:
+            for (int i = this.defs.height - 1; i >= 0; i--) {
+                for (int y = 0; y < this.defs.width; y++) {
+                    if (blocks[y][i].getState() != Block.FILLED) {
+                        continue ML;
+                    }
+                }
+                clearedLines++;
+                whichline = i;
+                break;
+            }
 
-        //Loops to find any row that has every block filled.
-        // If one block is not filled, the loop breaks.
-        ML:
-        for (int i = this.defs.height - 1; i >= 0; i--) {
-            for (int y = 0; y < this.defs.width; y++) {
-                if (!(blocks[y][i].getState() == Block.FILLED)) {
-                    continue ML;
+            // If this recursive step produced more clears:
+            if (clearedLines > old) {
+                for (int i = whichline; i > 0; i--) {
+                    /* Iterate and copy the state of the block on top of itself
+                       to its location. */
+                    for (int y = 0; y < blocks.length; y++) {
+                        blocks[y][i] = blocks[y][i - 1];
+                    }
                 }
             }
-
-            alreadycleared++;
-            whichline = i;
-            break;
-        }
-
-        //If this recursive step produced more clears:
-        if (alreadycleared > old) {
-            for (int i = whichline; i > 0; i--) {//Iterate and copy the state of the block on top of itself
-                //to its location.
-                for (int y = 0; y < blocks.length; y++) {
-                    blocks[y][i] = blocks[y][i - 1];
-                }
-            }
-
-            //TODO Find a better way to fix StackOverflowError
-            if (alreadycleared < 5) {
-                //Recursion step! Necessary if you want to clear more than
-                //1 line at a time!
-                checkforclears(alreadycleared);
-            }
-        } else if (alreadycleared > 0) {
-            score.addRemovedLines(alreadycleared);
+        } while(clearedLines > old);
+        if (clearedLines > 0) {
+            score.addRemovedLines(clearedLines);
         }
     }
 
