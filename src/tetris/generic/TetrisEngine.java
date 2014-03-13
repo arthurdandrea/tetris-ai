@@ -416,7 +416,12 @@ public final class TetrisEngine {
      * doesn't appear halfway down the screen.
      */
     public void startengine() {
-        this.step();
+        this.rwLock.writeLock().lock();
+        try {
+            this.step();
+        } finally {
+            this.rwLock.writeLock().unlock();
+        }
     }
 
     /*
