@@ -20,6 +20,7 @@ package tetris.generic;
 import com.google.common.collect.Iterators;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import tetris.ai.BlockPosition;
 
 /**
@@ -27,6 +28,30 @@ import tetris.ai.BlockPosition;
  * @author Arthur D'Andréa Alemar
  */
 public class TetrisGameDefinitions {
+    private static final FreeSpaces[][] freeSpaces = calculateFreeSpaces();
+    
+    /**
+     * Return the amount of free columns right and left of a block definition
+     * for each rotation of the block
+     * 
+     * @param type the type of the tetromino block
+     * @return an array of free spaces for each rotation of the block
+     */
+    public static FreeSpaces[] getFreeSpaces(Tetromino.Type type) {
+        Objects.requireNonNull(type);
+        return freeSpaces[type.ordinal()];
+    }
+    
+    private static FreeSpaces[][] calculateFreeSpaces() {
+        FreeSpaces[][] result = new FreeSpaces[TetrisEngine.blockdef.length][];
+        for (int i = 0; i < TetrisEngine.blockdef.length; ++i) {
+            result[i] = new FreeSpaces[TetrisEngine.blockdef[i].length];
+            for (int j = 0; j < TetrisEngine.blockdef[i].length; j++) {
+                result[i][j] = calculateFreeSpaces(TetrisEngine.blockdef[i][j]);
+            }
+        }
+        return result;
+    }
 
     private static FreeSpaces calculateFreeSpaces(byte[][] in) {
         // It's free if all of them are zero, and their sum is zero.
@@ -56,33 +81,38 @@ public class TetrisGameDefinitions {
         }
         return new FreeSpaces(freeOnLeft, freeOnRight);
     }
+    
+    /**
+     * The height of the board
+     */
     public final int height;
+
+    /**
+     * The width of the board
+     */
     public final int width;
-    private final FreeSpaces[][] freeSpaces;
     private final BlockPosition[][] possibleFits;
 
     public TetrisGameDefinitions(int width, int height) {
+        assert width > 0 && height > 0;
         this.width = width;
         this.height = height;
-        this.freeSpaces = new FreeSpaces[TetrisEngine.blockdef.length][];
-        for (int i = 0; i < TetrisEngine.blockdef.length; ++i) {
-            this.freeSpaces[i] = new FreeSpaces[TetrisEngine.blockdef[i].length];
-            for (int j = 0; j < TetrisEngine.blockdef[i].length; j++) {
-                this.freeSpaces[i][j] = calculateFreeSpaces(TetrisEngine.blockdef[i][j]);
-            }
-        }
         this.possibleFits = new BlockPosition[TetrisEngine.blockdef.length][];
         for (int i = 0; i < TetrisEngine.blockdef.length; i++) {
-            this.possibleFits[i] = Iterators.toArray(new GetPossibleFits(this, Tetromino.Type.values()[i]), BlockPosition.class);
+            this.possibleFits[i] = Iterators.toArray(new GetPossibleFits(Tetromino.Type.values()[i]), BlockPosition.class);
         }
     }
-    
-    public BlockPosition[] getPossibleFits(Tetromino.Type type) {
-        return this.possibleFits[type.ordinal()];
-    }
 
-    public FreeSpaces[] getFreeSpaces(Tetromino.Type type) {
-        return this.freeSpaces[type.ordinal()];
+    /**
+     * Return all the possible fits of a block type on an empty board, combining
+     * every rotations and every horizontal position.
+     * 
+     * @param type the type of the tetromino block
+     * @return an array of possible positions
+     */
+    public BlockPosition[] getPossibleFits(Tetromino.Type type) {
+        Objects.requireNonNull(type);
+        return this.possibleFits[type.ordinal()];
     }
 
     public static final class FreeSpaces {
@@ -96,9 +126,8 @@ public class TetrisGameDefinitions {
     }
 
     // List of all the possible fits.
-    private static class GetPossibleFits implements Iterator<BlockPosition> {
+    private class GetPossibleFits implements Iterator<BlockPosition> {
         private final Tetromino.Type type;
-        private final TetrisGameDefinitions definitions;
         private final FreeSpaces[] rotations;
 
         private int maxX;
@@ -106,10 +135,9 @@ public class TetrisGameDefinitions {
         private int currX;
         private boolean end;
         
-        GetPossibleFits(TetrisGameDefinitions definitions, Tetromino.Type type) {
+        GetPossibleFits(Tetromino.Type type) {
             this.type = type;
-            this.definitions = definitions;
-            this.rotations = definitions.getFreeSpaces(this.type);
+            this.rotations = getFreeSpaces(this.type);
             
             this.currentRotation = -1;
             this.maxX = 0;
@@ -144,7 +172,7 @@ public class TetrisGameDefinitions {
             if (maxX == 0) {
                 FreeSpaces free = rotations[currentRotation];
                 currX = 0 - free.left;
-                maxX = (definitions.width - 4) + free.right;
+                maxX = (width - 4) + free.right;
             }
             return new BlockPosition(currX++, currentRotation, this.type);
         }
