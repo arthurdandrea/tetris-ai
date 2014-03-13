@@ -55,6 +55,97 @@ public class TetrisAI extends AbstractAI {
         });
     }
 
+    private int evalPosition(byte[][] mockgrid, TetrisEngine engine, BlockPosition r) throws GameOverException {        
+        byte[][] bl = TetrisEngine.blockdef[r.type.ordinal()][r.rot];
+        int cleared = 0;
+
+        // Now we find the fitting HEIGHT by starting from the bottom and
+        // working upwards. If we're fitting a line-block on an empty
+        // grid then the HEIGHT would be HEIGHT-1, and it can't be any
+        // lower than that, so that's where we'll start.
+        int h;
+        for (h = engine.defs.height - 1; ; h--) {
+            // indicator. 1: fits. 0: doesn't fit. -1: game over.
+            int fit_state = 1;
+
+            for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                    //we have to simulate lazy evaluation in order to avoid
+                    //out of bounds errors.
+                    if (bl[j][i] >= 1) {
+                        //still have to check for overflow. X-overflow can't
+                        //happen at this stage but Y-overflow can.
+
+                        if (h + j >= engine.defs.height) {
+                            fit_state = 0;
+                        } else if (h + j < 0) {
+                            fit_state = -1;
+                        } else {
+                            // Already filled, doesn't fit.
+                            if (mockgrid[i + r.bx][h + j] >= 1) {
+                                fit_state = 0;
+                            }
+
+                            // Still the possibility that another block
+                            // might still be over it.
+                            if (fit_state == 1) {
+                                for (int h1 = h + j - 1; h1 >= 0; h1--) {
+                                    if (mockgrid[i + r.bx][h1] >= 1) {
+                                        fit_state = 0;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            //We don't want game over so here:
+            if (fit_state == -1) {
+                throw new GameOverException();
+            }
+
+            //1 = found!
+            if (fit_state == 1) {
+                break;
+            }
+        }
+
+        // copy over block position
+        for (int i = 0; i < 4; i++) {
+            for (int j = 0; j < 4; j++) {
+                if (bl[j][i] == 1) {
+                    mockgrid[r.bx + i][h + j] = 2;
+                }
+            }
+        }
+
+        // check for clears
+        boolean foundline;
+        do {
+            foundline = false;
+            ML:
+            for (int i = mockgrid[0].length - 1; i >= 0; i--) {
+                for (int y = 0; y < mockgrid.length; y++) {
+                    if (!(mockgrid[y][i] > 0)) {
+                        continue ML;
+                    }
+                }
+                // line i is full, clear it and copy
+                cleared++;
+                foundline = true;
+                for (int a = i; a > 0; a--) {
+                    for (int y = 0; y < mockgrid.length; y++) {
+                        mockgrid[y][a] = mockgrid[y][a - 1];
+                    }
+                }
+                break ML;
+            }
+        } while (foundline && cleared < 10);
+        return cleared;
+    }
+    
     // Evaluate position not with one, but with two blocks.
     private BestFit evalPosition(TetrisEngine engine, BlockPosition position1, BlockPosition position2) {
         // First thing: Simulate the drop. Do this on a mock grid.
@@ -64,115 +155,11 @@ public class TetrisAI extends AbstractAI {
         byte[][] mockgrid = engine.getMockGrid();
 
         int cleared = 0;
-        for (int block = 1; block <= 2; block++) {
-
-            byte[][] bl;
-            BlockPosition r;
-
-            if (block == 1) {
-                r = position1;
-            } else {
-                r = position2;
-            }
-
-            if (block == 1) {
-                bl = TetrisEngine.blockdef[engine.getActiveblock().type.ordinal()][r.rot];
-            } else {
-                bl = TetrisEngine.blockdef[engine.getNextblock().type.ordinal()][r.rot];
-            }
-
-            // Now we find the fitting HEIGHT by starting from the bottom and
-            // working upwards. If we're fitting a line-block on an empty
-            // grid then the HEIGHT would be HEIGHT-1, and it can't be any
-            // lower than that, so that's where we'll start.
-            int h;
-            for (h = engine.defs.height - 1;; h--) {
-
-                // indicator. 1: fits. 0: doesn't fit. -1: game over.
-                int fit_state = 1;
-
-                for (int i = 0; i < 4; i++) {
-                    for (int j = 0; j < 4; j++) {
-                        //check for bounds.
-                        boolean block_p = bl[j][i] >= 1;
-
-                        //we have to simulate lazy evaluation in order to avoid
-                        //out of bounds errors.
-                        if (block_p) {
-                            //still have to check for overflow. X-overflow can't
-                            //happen at this stage but Y-overflow can.
-
-                            if (h + j >= engine.defs.height) {
-                                fit_state = 0;
-                            } else if (h + j < 0) {
-                                fit_state = -1;
-                            } else {
-                                boolean board_p = mockgrid[i + r.bx][h + j] >= 1;
-
-                                // Already filled, doesn't fit.
-                                if (board_p) {
-                                    fit_state = 0;
-                                }
-
-                                // Still the possibility that another block
-                                // might still be over it.
-                                if (fit_state == 1) {
-                                    for (int h1 = h + j - 1; h1 >= 0; h1--) {
-                                        if (mockgrid[i + r.bx][h1] >= 1) {
-                                            fit_state = 0;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                //We don't want game over so here:
-                if (fit_state == -1) {
-                    return new BestFit(position1, position2, Double.NEGATIVE_INFINITY);
-                }
-
-                //1 = found!
-                if (fit_state == 1) {
-                    break;
-                }
-
-            }
-
-            // copy over block position
-            for (int i = 0; i < 4; i++) {
-                for (int j = 0; j < 4; j++) {
-                    if (bl[j][i] == 1) {
-                        mockgrid[r.bx + i][h + j] = 2;
-                    }
-                }
-            }
-
-            // check for clears
-            boolean foundline;
-            do {
-                foundline = false;
-                ML:
-                for (int i = mockgrid[0].length - 1; i >= 0; i--) {
-                    for (int y = 0; y < mockgrid.length; y++) {
-                        if (!(mockgrid[y][i] > 0)) {
-                            continue ML;
-                        }
-                    }
-
-                    // line i is full, clear it and copy
-                    cleared++;
-                    foundline = true;
-                    for (int a = i; a > 0; a--) {
-                        for (int y = 0; y < mockgrid.length; y++) {
-                            mockgrid[y][a] = mockgrid[y][a - 1];
-                        }
-                    }
-                    break ML;
-                }
-            } while (foundline);
+        try {
+            cleared += this.evalPosition(mockgrid, engine, position1);
+            cleared += this.evalPosition(mockgrid, engine, position2);
+        } catch (GameOverException e) {
+            return new BestFit(position1, position2, Double.NEGATIVE_INFINITY);
         }
 
         // Now we evaluate the resulting position.
@@ -250,14 +237,6 @@ public class TetrisAI extends AbstractAI {
         }
 
         score += cleared * _CLEAR;
-
-        /*
-         * for (int i1 = 0; i1 < mockgrid.length; i1++) { for (int i2 = 0; i2 <
-         * mockgrid[0].length; i2++) { System.out.print(mockgrid[i1][i2] + " ");
-         * } System.out.println(); }
-         System.out.println(score);
-         */
-        //System.exit(0);
         return new BestFit(position1, position2, score);
     }
 
@@ -276,6 +255,9 @@ public class TetrisAI extends AbstractAI {
         public int compareTo(BestFit o) {
             return Double.compare(score, o.score);
         }
+    }
+
+    private static class GameOverException extends Exception {
     }
 
     private class EvalPosition implements Function<Pair<BlockPosition>, BestFit> {

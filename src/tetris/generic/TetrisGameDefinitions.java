@@ -97,6 +97,7 @@ public class TetrisGameDefinitions {
 
     // List of all the possible fits.
     private static class GetPossibleFits implements Iterator<BlockPosition> {
+        private final Tetromino.Type type;
         private final TetrisGameDefinitions definitions;
         private final FreeSpaces[] rotations;
 
@@ -104,10 +105,11 @@ public class TetrisGameDefinitions {
         private int currentRotation;
         private int currX;
         private boolean end;
-
+        
         GetPossibleFits(TetrisGameDefinitions definitions, Tetromino.Type type) {
+            this.type = type;
             this.definitions = definitions;
-            this.rotations = definitions.getFreeSpaces(type);
+            this.rotations = definitions.getFreeSpaces(this.type);
             
             this.currentRotation = -1;
             this.maxX = 0;
@@ -144,7 +146,7 @@ public class TetrisGameDefinitions {
                 currX = 0 - free.left;
                 maxX = (definitions.width - 4) + free.right;
             }
-            return new BlockPosition(currX++, currentRotation);
+            return new BlockPosition(currX++, currentRotation, this.type);
         }
 
         @Override

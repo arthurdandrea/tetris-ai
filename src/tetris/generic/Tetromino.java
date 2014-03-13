@@ -8,6 +8,22 @@ import java.util.Random;
  */
 public final class Tetromino implements Cloneable {
 
+    public static Tetromino getRandom(Random random) {
+        Tetromino.Type type = Tetromino.Type.getRandom(random);
+        byte[][][] blockdef = TetrisEngine.blockdef[type.ordinal()];
+        int rotation;
+        if (blockdef.length == 1) {
+            rotation = 0;
+        } else {
+            rotation = random.nextInt(blockdef.length);
+        }
+        Tetromino tetromino = new Tetromino();
+        tetromino.type = type;
+        tetromino.rot = rotation;
+        tetromino.array = TetrisEngine.toBlock2D(blockdef[rotation], type);
+        return tetromino;
+    }
+
     public Block[][] array;
     public int x, y, rot;
     public Type type;

@@ -216,7 +216,7 @@ public class TetrisPanel extends JPanel {
         for (int i = 0; i < blocks.length; i++) {
             for (int j = 0; j < blocks[i].length; j++) {
                 // Just in case block's null, it doesn't draw as black.
-                g.setColor(theme.getColor(blocks[i][j].type));
+                g.setColor(theme.getColor(blocks[i][j].getType()));
 
                 g.fillRect(x + i * squaredim,
                            y + j * squaredim, squaredim, squaredim);

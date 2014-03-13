@@ -1,14 +1,21 @@
 package tetris.ai;
 
+import java.util.Objects;
+import tetris.generic.Tetromino.Type;
+
 public class BlockPosition {
+    public final Type type;
     public final byte bx;
     public final byte rot;
 
-    public BlockPosition(int bx, int rot) {
-        this((byte) bx, (byte) rot);
+    public BlockPosition(int bx, int rot, Type type) {
+        this((byte) bx, (byte) rot, type);
     }
 
-    public BlockPosition(byte bx, byte rot) {
+    public BlockPosition(byte bx, byte rot, Type type) {
+        Objects.requireNonNull(type);
+
+        this.type = type;
         this.bx = bx;
         this.rot = rot;
     }

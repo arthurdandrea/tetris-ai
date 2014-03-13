@@ -12,7 +12,7 @@ public class Block implements Cloneable {
      */
     private volatile int state = EMPTY;
 
-    public Tetromino.Type type;
+    private Tetromino.Type type;
 
     /*
      * Initializing constructor.
@@ -46,5 +46,19 @@ public class Block implements Cloneable {
 
     public void setState(int state) {
         this.state = state;
+    }
+
+    /**
+     * @return the type
+     */
+    public Tetromino.Type getType() {
+        return this.state == EMPTY ? null : this.type;
+    }
+
+    /**
+     * @param type the type to set
+     */
+    public void setType(Tetromino.Type type) {
+        this.type = type;
     }
 }

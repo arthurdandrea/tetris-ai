@@ -487,7 +487,7 @@ public final class TetrisEngine {
             for (int r = 0; r < this.defs.height; r++) {
                 if (buffer[i][r].getState() == Block.ACTIVE) {
                     buffer[i][r].setState(Block.EMPTY);
-                    buffer[i][r].type = null;
+                    buffer[i][r].setType(null);
                 }
             }
         }
@@ -499,7 +499,7 @@ public final class TetrisEngine {
                     int xr = x + r;
                     int yi = y + i;
                     buffer[xr][yi].setState(Block.ACTIVE);
-                    buffer[xr][yi].type = activeblock.type;
+                    buffer[xr][yi].setType(activeblock.type);
                 }
             }
         }
@@ -588,19 +588,16 @@ public final class TetrisEngine {
         this.score.addDroppedBlock();
     }
 
-    /*
+    /**
      * Create and return a random block.
+     * 
+     * @return a random block
      */
     private Tetromino getRandBlock() {
-        Tetromino.Type blockType = Tetromino.Type.getRandom(rdm);
-        int rotation = 0;
-        if (blockdef[blockType.ordinal()].length == 1) {
-            rotation = rdm.nextInt(blockdef[blockType.ordinal()].length);
-        }
-        Tetromino ret = new Tetromino(blockType, rotation);
-        ret.x = this.defs.width / 2 - 2;
-        ret.y = 0;
-        return ret;
+        Tetromino block = Tetromino.getRandom(rdm);
+        block.x = this.defs.width / 2 - 2;
+        block.y = 0;
+        return block;
     }
 
     /**
