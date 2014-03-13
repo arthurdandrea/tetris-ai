@@ -215,14 +215,14 @@ public final class TetrisEngine {
     /**
      * The game definitions for this engine
      */
-    public final TetrisGameDefinitions defs;
+    public final Definitions defs;
 
     /**
      * Remember to call startengine() or else this won't do
      * anything!
      */
     public TetrisEngine() {
-        this(new TetrisGameDefinitions(6, 20));
+        this(new Definitions(6, 20));
     }
 
     /**
@@ -232,7 +232,7 @@ public final class TetrisEngine {
      * @param height the height of the board
      */
     public TetrisEngine(int width, int height) {
-        this(new TetrisGameDefinitions(width, height));
+        this(new Definitions(width, height));
     }
     
     /**
@@ -240,7 +240,7 @@ public final class TetrisEngine {
      * anything!
      * @param defs the definitions for the game
      */
-    public TetrisEngine(TetrisGameDefinitions defs) {
+    public TetrisEngine(Definitions defs) {
         this.defs = defs;
         this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.rwLock = new ReentrantReadWriteLock();

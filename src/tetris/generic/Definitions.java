@@ -27,7 +27,7 @@ import tetris.ai.BlockPosition;
  *
  * @author Arthur D'Andréa Alemar
  */
-public class TetrisGameDefinitions {
+public class Definitions {
     private static final FreeSpaces[][] freeSpaces = calculateFreeSpaces();
     
     /**
@@ -93,7 +93,7 @@ public class TetrisGameDefinitions {
     public final int width;
     private final BlockPosition[][] possibleFits;
 
-    public TetrisGameDefinitions(int width, int height) {
+    public Definitions(int width, int height) {
         assert width > 0 && height > 0;
         this.width = width;
         this.height = height;
