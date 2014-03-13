@@ -276,14 +276,16 @@ public final class TetrisEngine {
     }
 
 
-    /*
+    /**
      * Called when the RIGHT key is pressed.
+     * 
+     * @return true if the move was successful
      */
-    public void keyright() {
+    public boolean keyright() {
         this.rwLock.writeLock().lock();
         try {
             if (activeblock == null || state != GameState.PLAYING) {
-                return;
+                return false;
             }
 
             activeblock.x++;
@@ -291,20 +293,24 @@ public final class TetrisEngine {
             //Failsafe: Revert XPosition.
             if (!copy()) {
                 activeblock.x--;
+                return false;
             }
+            return true;
         } finally {
             this.rwLock.writeLock().unlock();
         }
     }
 
-    /*
+    /**
      * Called when the LEFT key is pressed.
+     * 
+     * @return true if the move was successful
      */
-    public void keyleft() {
+    public boolean keyleft() {
         this.rwLock.writeLock().lock();
         try {
             if (activeblock == null || state != GameState.PLAYING) {
-                return;
+                return false;
             }
 
             activeblock.x--;
@@ -312,50 +318,58 @@ public final class TetrisEngine {
             //Failsafe: Revert XPosition.
             if (!copy()) {
                 activeblock.x++;
+                return false;
             }
+            return true;
         } finally {
             this.rwLock.writeLock().unlock();
         }
     }
 
-    /*
+    /**
      * Called when the DOWN key is pressed.
+     * 
+     * @return true if the move was successful
      */
-    public void keydown() {
+    public boolean keydown() {
         this.rwLock.writeLock().lock();
         try {
             if (state != GameState.PLAYING) {
-                return;
+                return false;
             }
             //if (activeblock == null || state != GameState.PLAYING) {
             //    return;
             //}
 
-            step();
+            return step();
         } finally {
             this.rwLock.writeLock().unlock();
         }
     }
 
-    /*
+    /**
      * Called when rotate key is called (Z or UP)
+     * 
+     * @return true if the move was successful
      */
-    public void keyrotate() {
+    public boolean keyrotate() {
         this.rwLock.writeLock().lock();
         try {
             if (activeblock == null || activeblock.array == null || state != GameState.PLAYING) {
-                return;
+                return false;
             }
 
             Tetromino lastBlock = activeblock;
             activeblock = lastBlock.rotate();
             if (activeblock == lastBlock) {
-                return;
+                return false;
             }
             //Failsafe revert.
             if (!copy()) {
                 activeblock = lastBlock;
+                return false;
             }
+            return true;
         } finally {
             this.rwLock.writeLock().unlock();
         }
@@ -494,13 +508,13 @@ public final class TetrisEngine {
         return true;
     }
 
-    /*
+    /**
      * Steps into the next phase if possible.
      */
-    public void step() {
-        if (this.activeblock == null) {//step() gives you a random block if none is available.
+    private boolean step() {
+        if (this.activeblock == null) {// step() gives you a random block if none is available.
             newblock();
-            return;
+            return false;
         }
 
         //move 1 down.
@@ -508,7 +522,9 @@ public final class TetrisEngine {
 
         if (!this.copy()) {
             this.donecurrent();
+            return false;
         }
+        return true;
 
     }
 

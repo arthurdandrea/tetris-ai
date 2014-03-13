@@ -5,11 +5,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.Objects;
+import java.util.logging.Logger;
 import tetris.ProjectConstants.GameState;
 import tetris.generic.TetrisEngine;
 import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {
+    private static final Logger logger = Logger.getLogger(AbstractAI.class.getName());
 
     protected static void movehere(TetrisEngine engine, BlockPosition position) {
         Objects.requireNonNull(engine);
@@ -19,34 +21,21 @@ public abstract class AbstractAI {
            it or move it and it doesn't move then it's stuck and we give up. */
         Tetromino activeblock = engine.getActiveblock();
         int init_state = activeblock.rot;
-        int prev_state = init_state;
-        while (activeblock.rot != position.rot) {
-            // Rotate first so we don't get stuck in the edges.
-            engine.keyrotate();
-            activeblock = engine.getActiveblock(); // refresh activeblock
+        // Rotate first so we don't get stuck in the edges.
+        for (; activeblock.rot != position.rot; activeblock = engine.getActiveblock()) {
             // Now check if it worked
-            if (prev_state == activeblock.rot || init_state == activeblock.rot) {
+            if (!engine.keyrotate() || init_state == engine.getActiveblock().rot) {
+                logger.warning(String.format("could not rotate active block to rot=%d", position.rot));
                 engine.keyslam();
                 return;
-            } else {
-                prev_state = activeblock.rot;
             }
         }
-        prev_state = activeblock.x;
-        while (activeblock.x != position.bx) {
-            // Now nudge the block.
-            if (activeblock.x < position.bx) {
-                engine.keyright();
-            } else if (activeblock.x > position.bx) {
-                engine.keyleft();
-            }
-            activeblock = engine.getActiveblock(); // refresh activeblock
-            // Now check if it worked
-            if (prev_state == activeblock.x) {
+        
+        for (; activeblock.x != position.bx; activeblock = engine.getActiveblock()) {
+            if (activeblock.x < position.bx ? !engine.keyright() : !engine.keyleft()) {
+                logger.warning(String.format("could not move active block to x=%d", position.bx));
                 engine.keyslam();
                 return;
-            } else {
-                prev_state = activeblock.x;
             }
         }
         engine.keyslam();
