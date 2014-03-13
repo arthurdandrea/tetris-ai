@@ -152,7 +152,7 @@ public class TetrisAI extends AbstractAI {
         // copying it here may seem like a waste but clearing it
         // after each iteration is too much of a hassle.
         // This copies the grid.
-        byte[][] mockgrid = engine.getMockGrid();
+        byte[][] mockgrid = engine.createMockGrid();
 
         int cleared = 0;
         try {

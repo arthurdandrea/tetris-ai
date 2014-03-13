@@ -7,14 +7,15 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import tetris.ProjectConstants.GameState;
 
-/*
- * This class calculates most of the block positions, rotations, etc, although
- * the TetrisPanel object still keeps track of the concrete block coordinates.
- * This class will change variables in the TetrisPanel class.
+/**
+ * This class calculates the block positions, rotations, moves across the board.
+ * Leaving to the gui and ai classes to only interface with this class.
+ * It is thread safe and uses a ReadWriteLock.
+ * It also has observable properties: score, state, blocks, nextblock.
  */
 public final class TetrisEngine {
-    //---------------VARIABLES--------------//
-    /*
+
+    /**
      * Bunch of hardcoded blocks and their rotations. Code them high up in the
      * array so that when you get a new one it appears in the highest spot 
      * possible.
@@ -133,11 +134,13 @@ public final class TetrisEngine {
         }
     }};
 
-    /*
+    /**
      * Copies an array, but runs in n^2 time.
+     * 
+     * @param in a Block[][] matrix to copy
+     * @return a Block[][] matrix copy
      */
     public static Block[][] copy2D(Block[][] in) {
-        //if(in == null) return null;
         Block[][] ret = new Block[in.length][in[0].length];
 
         for (int i = 0; i < in.length; i++) {
@@ -153,8 +156,12 @@ public final class TetrisEngine {
         return ret;
     }
 
-    /*
+    /**
      * Function to convert byte[][] to Block[][]
+     * 
+     * @param b the byte[][] matrix
+     * @param type the block type to set in the return matrix
+     * @return a Block[][] matrix
      */
     public static Block[][] toBlock2D(byte[][] b, Tetromino.Type type) {
         if (b == null) {
@@ -175,8 +182,11 @@ public final class TetrisEngine {
         return ret;
     }
 
-    /*
+    /**
      * Function to convert Block[][] to byte[][]
+     * 
+     * @param b the Block[][] matrix
+     * @return a byte[][] matrix
      */
     public static byte[][] toByte2D(Block[][] b) {
         if (b == null) {
@@ -201,20 +211,37 @@ public final class TetrisEngine {
     private GameState state;
     private Tetromino activeblock;
     private Tetromino nextblock;
+
+    /**
+     * The game definitions for this engine
+     */
     public final TetrisGameDefinitions defs;
 
+    /**
+     * Remember to call startengine() or else this won't do
+     * anything!
+     */
     public TetrisEngine() {
-        this(6, 20);
+        this(new TetrisGameDefinitions(6, 20));
     }
 
     /**
      * Remember to call startengine() or else this won't do
      * anything!
-     * @param width
-     * @param height
+     * @param width the width of the board
+     * @param height the height of the board
      */
     public TetrisEngine(int width, int height) {
-        this.defs = new TetrisGameDefinitions(width, height);
+        this(new TetrisGameDefinitions(width, height));
+    }
+    
+    /**
+     * Remember to call startengine() or else this won't do
+     * anything!
+     * @param defs the definitions for the game
+     */
+    public TetrisEngine(TetrisGameDefinitions defs) {
+        this.defs = defs;
         this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.rwLock = new ReentrantReadWriteLock();
         this.rdm = new Random();
@@ -374,7 +401,7 @@ public final class TetrisEngine {
         }
     }
 
-    /*
+    /**
      * Called when slam key (SPACE) is pressed.
      */
     public void keyslam() {
@@ -410,7 +437,7 @@ public final class TetrisEngine {
     //   //       ////////      //      ///  //   //   ////////      //
     //                                                               //
     ///////////////////////////////////////////////////////////////////
-    /*
+    /**
      * Should be called AFTER swing initialization. This is so the first block
      * doesn't appear halfway down the screen.
      */
@@ -423,7 +450,7 @@ public final class TetrisEngine {
         }
     }
 
-    /*
+    /**
      * Fully resets everything.
      */
     private void reset() {
@@ -439,9 +466,8 @@ public final class TetrisEngine {
         this.propertyChangeSupport.firePropertyChange("nextblock", null, null); // FIXME
     }
 
-    /*
-     * Done the current block; plays the FALL sound and changes all active
-     * blocks to filled.
+    /**
+     * Done the current block and changes all active blocks to filled.
      */
     private void donecurrent() {
         for (Block[] blocks : this.blocks) {
@@ -461,10 +487,10 @@ public final class TetrisEngine {
         this.propertyChangeSupport.firePropertyChange("blocks", null, null);
     }
 
-    /*
+    /**
      * Copies the position of the active block into the abstract block grid.
-     * Returns false if a block already exists under it, true otherwise.
-     *
+     * 
+     * @return false if a block already exists under it, true otherwise.
      */
     private boolean copy() {
         if (activeblock == null || activeblock.array == null) {
@@ -518,6 +544,8 @@ public final class TetrisEngine {
 
     /**
      * Steps into the next phase if possible.
+     * 
+     * @return true if the active block moved down without touching another block
      */
     private boolean step() {
         if (this.activeblock == null) {// step() gives you a random block if none is available.
@@ -627,8 +655,13 @@ public final class TetrisEngine {
             this.rwLock.readLock().unlock();
         }
     }
-    
-    public byte[][] getMockGrid() {
+
+    /**
+     * Create a mock grid based on the current state of this engine
+     * 
+     * @return a byte matrix
+     */
+    public byte[][] createMockGrid() {
         this.rwLock.readLock().lock();
         try {
             byte[][] mockgrid = new byte[this.defs.width][this.defs.height];
