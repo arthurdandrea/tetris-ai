@@ -642,7 +642,11 @@ public final class TetrisEngine {
     public Tetromino getActiveblock() {
         this.rwLock.readLock().lock();
         try {
-            return activeblock.clone();
+            if (activeblock == null) {
+                return null;
+            } else {
+                return activeblock.clone();
+            }
         } finally {
             this.rwLock.readLock().unlock();
         }
@@ -654,7 +658,11 @@ public final class TetrisEngine {
     public Tetromino getNextblock() {
         this.rwLock.readLock().lock();
         try {
-            return nextblock.clone();
+            if (nextblock == null) {
+                return null;
+            } else {
+                return nextblock.clone();
+            }
         } finally {
             this.rwLock.readLock().unlock();
         }
