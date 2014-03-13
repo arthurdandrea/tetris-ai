@@ -10,7 +10,7 @@ public final class Tetromino implements Cloneable {
 
     public static Tetromino getRandom(Random random) {
         Tetromino.Type type = Tetromino.Type.getRandom(random);
-        byte[][][] blockdef = TetrisEngine.blockdef[type.ordinal()];
+        byte[][][] blockdef = Definitions.blockdef[type.ordinal()];
         int rotation;
         if (blockdef.length == 1) {
             rotation = 0;
@@ -37,7 +37,7 @@ public final class Tetromino implements Cloneable {
         this();
         
         Objects.requireNonNull(blockType);
-        byte[][][] blockdef = TetrisEngine.blockdef[blockType.ordinal()];
+        byte[][][] blockdef = Definitions.blockdef[blockType.ordinal()];
         if (rotation < 0 || rotation >= blockdef.length) {
             throw new IndexOutOfBoundsException("rotation is out of bounds");
         }
@@ -48,7 +48,7 @@ public final class Tetromino implements Cloneable {
     }
     
     public Tetromino rotate() {
-        byte[][][] blockdef = TetrisEngine.blockdef[this.type.ordinal()];
+        byte[][][] blockdef = Definitions.blockdef[this.type.ordinal()];
         if (blockdef.length == 1) {
             return this;
         }

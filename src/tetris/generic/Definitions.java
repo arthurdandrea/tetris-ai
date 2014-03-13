@@ -29,6 +29,124 @@ import tetris.ai.BlockPosition;
  */
 public class Definitions {
     private static final FreeSpaces[][] freeSpaces = calculateFreeSpaces();
+    /**
+     * Bunch of hardcoded blocks and their rotations. Code them high up in the
+     * array so that when you get a new one it appears in the highest spot
+     * possible.
+     */
+    public static final byte[][][][] blockdef = {{
+    // 0 = I block.
+        {
+            {1, 1, 1, 1},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0}}},
+    // 1 = O block
+    {
+        {
+            {0, 1, 1, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}}},
+    // 2 = L block
+    {
+        {
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 0, 1, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 1, 1, 0},
+            {1, 0, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}}},
+    // 3 = J block
+    {
+        {
+            {0, 0, 1, 0},
+            {0, 0, 1, 0},
+            {0, 1, 1, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 1, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 0, 0, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}}},
+    // 4 = T block
+    {
+        {
+            {0, 1, 0, 0},
+            {1, 1, 1, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {1, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {1, 1, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}}
+    },
+    // 5 = S block
+    {
+        {
+            {0, 1, 1, 0},
+            {1, 1, 0, 0},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 1, 0, 0},
+            {0, 1, 1, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 0}}
+    },
+    // 6 = Z block
+    {
+        {
+            {0, 1, 1, 0},
+            {0, 0, 1, 1},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}},
+        {
+            {0, 0, 1, 0},
+            {0, 1, 1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 0}
+        }
+    }};
     
     /**
      * Return the amount of free columns right and left of a block definition
@@ -43,11 +161,11 @@ public class Definitions {
     }
     
     private static FreeSpaces[][] calculateFreeSpaces() {
-        FreeSpaces[][] result = new FreeSpaces[TetrisEngine.blockdef.length][];
-        for (int i = 0; i < TetrisEngine.blockdef.length; ++i) {
-            result[i] = new FreeSpaces[TetrisEngine.blockdef[i].length];
-            for (int j = 0; j < TetrisEngine.blockdef[i].length; j++) {
-                result[i][j] = calculateFreeSpaces(TetrisEngine.blockdef[i][j]);
+        FreeSpaces[][] result = new FreeSpaces[blockdef.length][];
+        for (int i = 0; i < blockdef.length; ++i) {
+            result[i] = new FreeSpaces[blockdef[i].length];
+            for (int j = 0; j < blockdef[i].length; j++) {
+                result[i][j] = calculateFreeSpaces(blockdef[i][j]);
             }
         }
         return result;
@@ -97,8 +215,8 @@ public class Definitions {
         assert width > 0 && height > 0;
         this.width = width;
         this.height = height;
-        this.possibleFits = new BlockPosition[TetrisEngine.blockdef.length][];
-        for (int i = 0; i < TetrisEngine.blockdef.length; i++) {
+        this.possibleFits = new BlockPosition[blockdef.length][];
+        for (int i = 0; i < blockdef.length; i++) {
             this.possibleFits[i] = Iterators.toArray(new GetPossibleFits(Tetromino.Type.values()[i]), BlockPosition.class);
         }
     }

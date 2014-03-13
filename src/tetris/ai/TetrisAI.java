@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.Iterator;
+import tetris.generic.Definitions;
 import tetris.generic.TetrisEngine;
 import tetris.util.FutureExtremes;
 import tetris.util.functional.CartesianProduct;
@@ -56,7 +57,7 @@ public class TetrisAI extends AbstractAI {
     }
 
     private int evalPosition(byte[][] mockgrid, TetrisEngine engine, BlockPosition r) throws GameOverException {        
-        byte[][] bl = TetrisEngine.blockdef[r.type.ordinal()][r.rot];
+        byte[][] bl = Definitions.blockdef[r.type.ordinal()][r.rot];
         int cleared = 0;
 
         // Now we find the fitting HEIGHT by starting from the bottom and

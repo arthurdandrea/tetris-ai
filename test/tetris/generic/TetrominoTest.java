@@ -53,7 +53,7 @@ public class TetrominoTest {
     public void testToString() {
         Tetromino.Type[] values = Tetromino.Type.values();
         for (Tetromino.Type type : values) {
-            byte[][][] blockdef = TetrisEngine.blockdef[type.ordinal()];
+            byte[][][] blockdef = Definitions.blockdef[type.ordinal()];
             for (int rotation = 0; rotation < blockdef.length; rotation++) {
                 Tetromino tetro = new Tetromino(type, rotation);
                 assertThat(tetro.toString(), startsWith("Tetromino"));
