@@ -1,7 +1,7 @@
 package tetris.generic;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.Random;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -192,13 +192,13 @@ public final class TetrisEngine {
         return ret;
     }
 
+    private final PropertyChangeSupport propertyChangeSupport;
     private final ReadWriteLock rwLock;
     private final Random rdm;
 
     private Block[][] blocks;
     private Score score;
     private GameState state;
-    private List<TetrisEngineListener> listeners;
     private Tetromino activeblock;
     private Tetromino nextblock;
     public final TetrisGameDefinitions defs;
@@ -215,8 +215,8 @@ public final class TetrisEngine {
      */
     public TetrisEngine(int width, int height) {
         this.defs = new TetrisGameDefinitions(width, height);
+        this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.rwLock = new ReentrantReadWriteLock();
-        this.listeners = new ArrayList<>();
         this.rdm = new Random();
         this.blocks = new Block[this.defs.width][this.defs.height];
         this.score = new Score();
@@ -238,12 +238,9 @@ public final class TetrisEngine {
                 this.step();
                 this.score = new Score();
             }
+            GameState oldValue = this.state;
             this.state = newValue;
-
-            List<TetrisEngineListener> listenersCopy = new ArrayList<>(this.listeners);
-            for (TetrisEngineListener listener : listenersCopy) {
-                listener.onGameStateChange(this);
-            }
+            this.propertyChangeSupport.firePropertyChange("state", oldValue, newValue);
         } finally {
             this.rwLock.writeLock().unlock();
         }
@@ -262,19 +259,21 @@ public final class TetrisEngine {
 
     }
 
-    public void addListener(TetrisEngineListener listener) {
-        this.listeners.add(listener);
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(listener);
     }
 
-    public void removeListener(TetrisEngineListener listener) {
-        this.rwLock.writeLock().lock();
-        try {
-            this.listeners.remove(listener);
-        } finally {
-            this.rwLock.writeLock().unlock();
-        }
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyName, propertyChangeListener);
     }
 
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
+    }
 
     /**
      * Called when the RIGHT key is pressed.
@@ -436,6 +435,8 @@ public final class TetrisEngine {
                 blocks[i][j] = new Block(Block.EMPTY, null);
             }
         }
+        this.propertyChangeSupport.firePropertyChange("blocks", null, null);
+        this.propertyChangeSupport.firePropertyChange("nextblock", null, null); // FIXME
     }
 
     /*
@@ -457,6 +458,7 @@ public final class TetrisEngine {
         // Now actually remove the blocks.
         this.checkforclears();
         this.newblock();
+        this.propertyChangeSupport.firePropertyChange("blocks", null, null);
     }
 
     /*
@@ -510,6 +512,7 @@ public final class TetrisEngine {
         }
 
         this.blocks = copy2D(buffer);
+        this.propertyChangeSupport.firePropertyChange("blocks", null, null);
         return true;
     }
 
@@ -569,7 +572,9 @@ public final class TetrisEngine {
             }
         } while(clearedLines > old);
         if (clearedLines > 0) {
-            score.addRemovedLines(clearedLines);
+            Score oldValue = this.score.Clone();
+            this.score.addRemovedLines(clearedLines);
+            this.propertyChangeSupport.firePropertyChange("score", oldValue, this.score.Clone());
         }
     }
 
@@ -592,7 +597,11 @@ public final class TetrisEngine {
         if (!this.copy()) {
             this.setState(GameState.GAMEOVER);
         }
+        
+        Score oldValue = this.score.Clone();
         this.score.addDroppedBlock();
+        this.propertyChangeSupport.firePropertyChange("score", oldValue, this.score.Clone());
+        this.propertyChangeSupport.firePropertyChange("nextblock", null, null);
     }
 
     /**

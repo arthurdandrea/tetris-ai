@@ -20,11 +20,12 @@ package tetris.ai;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tetris.ProjectConstants;
 import tetris.generic.TetrisEngine;
-import tetris.generic.TetrisEngineListener;
 
 /**
  *
@@ -40,7 +41,12 @@ public class AIExecutor {
     public AIExecutor(AbstractAI ai, TetrisEngine engine, ListeningExecutorService executor) {
         this.executor = executor;
         this.engine = engine;
-        this.engine.addListener(new TetrisEngineListenerImpl());
+        this.engine.addPropertyChangeListener("state", new PropertyChangeListener() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                AIExecutor.this.onGameStateChange();
+            }
+        });
         this.ai = ai;
         this.state = State.STOPED;
     }
@@ -76,17 +82,6 @@ public class AIExecutor {
                     state = State.STOPED;
                 }
             }
-        }
-    }
-
-    private class TetrisEngineListenerImpl implements TetrisEngineListener {
-
-        TetrisEngineListenerImpl() {
-        }
-
-        @Override
-        public void onGameStateChange(TetrisEngine engine) {
-            AIExecutor.this.onGameStateChange();
         }
     }
 }
