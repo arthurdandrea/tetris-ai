@@ -20,7 +20,7 @@ public final class Tetromino implements Cloneable {
         Tetromino tetromino = new Tetromino();
         tetromino.type = type;
         tetromino.rot = rotation;
-        tetromino.array = TetrisEngine.toBlock2D(blockdef[rotation], type);
+        tetromino.array = Block.toBlock2D(blockdef[rotation], type);
         return tetromino;
     }
 
@@ -44,7 +44,7 @@ public final class Tetromino implements Cloneable {
 
         this.type = blockType;
         this.rot = rotation;
-        this.array = TetrisEngine.toBlock2D(blockdef[this.rot], this.type);
+        this.array = Block.toBlock2D(blockdef[this.rot], this.type);
     }
     
     public Tetromino rotate() {
@@ -61,7 +61,7 @@ public final class Tetromino implements Cloneable {
         } else {
             other.rot = this.rot + 1;
         }
-        other.array = TetrisEngine.toBlock2D(blockdef[other.rot], this.type);
+        other.array = Block.toBlock2D(blockdef[other.rot], this.type);
         return other;
     }
 

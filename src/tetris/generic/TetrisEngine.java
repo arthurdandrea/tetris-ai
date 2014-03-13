@@ -15,74 +15,6 @@ import tetris.ProjectConstants.GameState;
  */
 public final class TetrisEngine {
 
-    /**
-     * Copies an array, but runs in n^2 time.
-     * 
-     * @param in a Block[][] matrix to copy
-     * @return a Block[][] matrix copy
-     */
-    public static Block[][] copy2D(Block[][] in) {
-        Block[][] ret = new Block[in.length][in[0].length];
-
-        for (int i = 0; i < in.length; i++) {
-            for (int j = 0; j < in[0].length; j++) {
-                if (in[i][j] == null) {
-                    ret[i][j] = null;
-                } else {
-                    ret[i][j] = in[i][j].clone();
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    /**
-     * Function to convert byte[][] to Block[][]
-     * 
-     * @param b the byte[][] matrix
-     * @param type the block type to set in the return matrix
-     * @return a Block[][] matrix
-     */
-    public static Block[][] toBlock2D(byte[][] b, Tetromino.Type type) {
-        if (b == null) {
-            return null;
-        }
-        Block[][] ret = new Block[b.length][b[0].length];
-        for (int i = 0; i < b.length; i++) {
-            for (int j = 0; j < b[0].length; j++) {
-                switch (b[i][j]) {
-                case 1:
-                    ret[i][j] = new Block(Block.ACTIVE, type);
-                    break;
-                default:
-                    ret[i][j] = new Block(Block.EMPTY, type);
-                }
-            }
-        }
-        return ret;
-    }
-
-    /**
-     * Function to convert Block[][] to byte[][]
-     * 
-     * @param b the Block[][] matrix
-     * @return a byte[][] matrix
-     */
-    public static byte[][] toByte2D(Block[][] b) {
-        if (b == null) {
-            return null;
-        }
-        byte[][] ret = new byte[b.length][b[0].length];
-        for (int i = 0; i < b.length; i++) {
-            for (int j = 0; j < b[0].length; j++) {
-                ret[i][j] = b[i][j].toByte();
-            }
-        }
-
-        return ret;
-    }
-
     private final PropertyChangeSupport propertyChangeSupport;
     private final ReadWriteLock rwLock;
     private final Random rdm;
@@ -394,7 +326,7 @@ public final class TetrisEngine {
                 }
             }
         }
-        Block[][] buffer = copy2D(blocks);
+        Block[][] buffer = Block.copy2D(blocks);
 
         //First remove all active blocks.
         for (int i = 0; i < this.defs.width; i++) {
@@ -418,7 +350,7 @@ public final class TetrisEngine {
             }
         }
 
-        this.blocks = copy2D(buffer);
+        this.blocks = Block.copy2D(buffer);
         this.propertyChangeSupport.firePropertyChange("blocks", null, null);
         return true;
     }
@@ -531,7 +463,7 @@ public final class TetrisEngine {
     public Block[][] getBlocks() {
         this.rwLock.readLock().lock();
         try {
-            return copy2D(blocks);
+            return Block.copy2D(blocks);
         } finally {
             this.rwLock.readLock().unlock();
         }
