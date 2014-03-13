@@ -533,7 +533,7 @@ public final class TetrisEngine {
 
     }
 
-    /*
+    /**
      * As expected this function checks whether there are any clears.
      */
     private void checkforclears() {
