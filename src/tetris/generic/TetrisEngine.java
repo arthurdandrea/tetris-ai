@@ -580,12 +580,14 @@ public final class TetrisEngine {
         assert this.activeblock == null;
 
         if (this.nextblock == null) {
+            this.activeblock = this.getRandBlock();
+            this.nextblock = this.getRandBlock();
+        } else {
+            /* Next block becomes the active block
+               next block gets randomly generated */
+            this.activeblock = this.nextblock.clone();
             this.nextblock = this.getRandBlock();
         }
-        /* Next block becomes the active block
-           next block gets randomly generated */
-        this.activeblock = this.nextblock.clone();
-        this.nextblock = this.getRandBlock();
 
         if (!this.copy()) {
             this.setState(GameState.GAMEOVER);
