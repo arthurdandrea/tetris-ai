@@ -28,7 +28,6 @@ import tetris.ai.BlockPosition;
  * @author Arthur D'Andréa Alemar
  */
 public class Definitions {
-    private static final FreeSpaces[][] freeSpaces = calculateFreeSpaces();
     /**
      * Bunch of hardcoded blocks and their rotations. Code them high up in the
      * array so that when you get a new one it appears in the highest spot
@@ -148,6 +147,9 @@ public class Definitions {
         }
     }};
     
+    private static final FreeSpaces[][] freeSpaces = calculateFreeSpaces();
+
+    
     /**
      * Return the amount of free columns right and left of a block definition
      * for each rotation of the block
@@ -212,7 +214,9 @@ public class Definitions {
     private final BlockPosition[][] possibleFits;
 
     public Definitions(int width, int height) {
-        assert width > 0 && height > 0;
+        assert width > 0;
+        assert height > 0;
+
         this.width = width;
         this.height = height;
         this.possibleFits = new BlockPosition[blockdef.length][];
