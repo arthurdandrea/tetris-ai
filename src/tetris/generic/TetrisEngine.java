@@ -442,11 +442,11 @@ public final class TetrisEngine {
 
         if (!this.copy()) {
             this.setState(GameState.GAMEOVER);
+        } else {
+            Score oldValue = this.score.Clone();
+            this.score.addDroppedBlock();
+            this.propertyChangeSupport.firePropertyChange("score", oldValue, this.score.Clone());
         }
-        
-        Score oldValue = this.score.Clone();
-        this.score.addDroppedBlock();
-        this.propertyChangeSupport.firePropertyChange("score", oldValue, this.score.Clone());
         this.propertyChangeSupport.firePropertyChange("nextblock", null, null);
     }
 
