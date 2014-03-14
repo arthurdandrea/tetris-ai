@@ -24,8 +24,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import tetris.ProjectConstants;
 import tetris.generic.TetrisEngine;
+import tetris.generic.TetrisEngine.GameState;
 
 /**
  *
@@ -75,7 +75,7 @@ public class AIExecutor {
 
         @Override
         public void run() {
-            if (engine.getState() == ProjectConstants.GameState.PLAYING) {
+            if (engine.getState() == GameState.PLAYING) {
                 Futures.addCallback(ai.process(engine), this, executor);
             } else {
                 synchronized (AIExecutor.this) {

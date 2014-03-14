@@ -24,9 +24,9 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import tetris.ProjectConstants;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
+import tetris.generic.TetrisEngine.GameState;
 import tetris.util.ExecutorServiceRule;
 
 /**
@@ -49,7 +49,7 @@ public class TetrisAITest {
         engine = new TetrisEngine();
         ai = new TetrisAI(executor);
         engine.startengine();
-        engine.setState(ProjectConstants.GameState.PLAYING);
+        engine.setState(GameState.PLAYING);
     }
     
     @Test

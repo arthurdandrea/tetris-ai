@@ -11,18 +11,19 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 import javax.swing.Timer;
-import tetris.ProjectConstants.GameState;
-import static tetris.ProjectConstants.getResURL;
 import tetris.ai.AIExecutor;
 import tetris.ai.TetrisAI;
 import tetris.generic.Block;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
+import tetris.generic.TetrisEngine.GameState;
 import tetris.generic.Tetromino;
 
 /*
@@ -51,6 +52,29 @@ public class TetrisPanel extends JPanel {
             .set(Tetromino.Type.Z, new Color(204, 102, 102))
             .setEmpty(Color.WHITE)
             .finish();
+
+    /**
+     * Returns a resource as a URL object, for certain file parsing. Should
+     * accomodate Eclipse and other clients/IDEs as well. Currently it loads
+     * resources from Eclipse, the jar file, and from Tortoise.
+     */
+    @SuppressWarnings("deprecation")
+    public static URL getResURL(String path) throws IOException {
+        try {
+            File f = new File("." + path);
+            if (!f.exists()) {
+                throw new Exception();
+            }
+            return f.getCanonicalFile().toURL();
+        } catch (Exception e) {
+            try {
+                return TetrisPanel.class.getResource(path);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+        throw new RuntimeException("File: " + path + " not found.");
+    }
 
     //---------------BEGIN PUBLIC VARIABLES---------------//
     /*

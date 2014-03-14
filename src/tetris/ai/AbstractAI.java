@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.logging.Logger;
-import tetris.ProjectConstants.GameState;
 import tetris.generic.TetrisEngine;
+import tetris.generic.TetrisEngine.GameState;
 import tetris.generic.Tetromino;
 
 public abstract class AbstractAI {

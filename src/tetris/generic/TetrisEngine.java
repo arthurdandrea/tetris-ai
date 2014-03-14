@@ -5,7 +5,6 @@ import java.beans.PropertyChangeSupport;
 import java.util.Random;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import tetris.ProjectConstants.GameState;
 
 /**
  * This class calculates the block positions, rotations, moves across the board.
@@ -14,7 +13,13 @@ import tetris.ProjectConstants.GameState;
  * It also has observable properties: score, state, blocks, nextblock.
  */
 public final class TetrisEngine {
-
+    /**
+     * Enum representation of the current game's state
+     */
+    public enum GameState {
+        PLAYING, PAUSED, GAMEOVER;
+    }
+    
     private final PropertyChangeSupport propertyChangeSupport;
     private final ReadWriteLock rwLock;
     private final Random rdm;
