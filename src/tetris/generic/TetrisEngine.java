@@ -263,6 +263,7 @@ public final class TetrisEngine {
         this.rwLock.writeLock().lock();
         try {
             this.step();
+            this.propertyChangeSupport.firePropertyChange("score", null, null);
         } finally {
             this.rwLock.writeLock().unlock();
         }
