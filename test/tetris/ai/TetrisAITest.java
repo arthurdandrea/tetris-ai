@@ -49,7 +49,6 @@ public class TetrisAITest {
         engine = new TetrisEngine();
         ai = new TetrisAI(executor);
         engine.startengine();
-        engine.setState(GameState.PLAYING);
     }
     
     @Test

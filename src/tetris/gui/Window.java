@@ -97,7 +97,6 @@ public class Window extends JFrame {
         initializeTetris();
         initializeMenu();
         initializeComponents();
-        this.engine.setState(tetris.generic.TetrisEngine.GameState.PLAYING);
         this.engine.startengine();
         this.pack();
     }
@@ -367,13 +366,7 @@ public class Window extends JFrame {
                     }
                     break;
                 case KeyEvent.VK_P:
-                    if (engine.getState() != GameState.PLAYING) {
-                        controlsPanel.setControlLabel(0, "Pause");
-                        engine.setState(GameState.PLAYING);
-                    } else {
-                        controlsPanel.setControlLabel(0, "Resume");
-                        engine.setState(GameState.PAUSED);
-                    }
+                    engine.tooglePause();
                     break;
                 case KeyEvent.VK_LEFT:
                     if (engine.getState() == GameState.PLAYING && !aiExecutor.isRunning()) {

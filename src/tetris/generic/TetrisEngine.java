@@ -14,10 +14,24 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class TetrisEngine {
     /**
-     * Enum representation of the current game's state
+     * Enum representation of the current game's state.
      */
     public enum GameState {
-        PLAYING, PAUSED, GAMEOVER;
+
+        /**
+         * The game is on.
+         */
+        PLAYING,
+
+        /**
+         * Time for a break.
+         */
+        PAUSED,
+
+        /**
+         * Damn.
+         */
+        GAMEOVER;
     }
     
     private final PropertyChangeSupport propertyChangeSupport;
@@ -72,10 +86,15 @@ public final class TetrisEngine {
      * @return the current state of the game
      */
     public GameState getState() {
-        return this.state;
+        this.rwLock.readLock().lock();
+        try {
+            return this.state;
+        } finally {
+            this.rwLock.readLock().unlock();
+        }
     }
-
-    public void setState(GameState newValue) {
+    
+    public void tooglePause() {
         this.rwLock.writeLock().lock();
         try {
             if (this.state == GameState.GAMEOVER) {
@@ -84,11 +103,12 @@ public final class TetrisEngine {
                 this.score = new Score();
             }
             GameState oldValue = this.state;
-            this.state = newValue;
-            this.propertyChangeSupport.firePropertyChange("state", oldValue, newValue);
+            this.state = this.state != GameState.PLAYING ? GameState.PLAYING : GameState.PAUSED;
+            this.propertyChangeSupport.firePropertyChange("state", oldValue, this.state);
         } finally {
             this.rwLock.writeLock().unlock();
         }
+
     }
 
     /**
@@ -262,6 +282,7 @@ public final class TetrisEngine {
     public void startengine() {
         this.rwLock.writeLock().lock();
         try {
+            this.state = GameState.PLAYING;
             this.step();
             this.propertyChangeSupport.firePropertyChange("score", null, null);
         } finally {
@@ -442,7 +463,9 @@ public final class TetrisEngine {
         }
 
         if (!this.copy()) {
-            this.setState(GameState.GAMEOVER);
+            GameState oldValue = this.state;
+            this.state = GameState.GAMEOVER;
+            this.propertyChangeSupport.firePropertyChange("state", oldValue, this.state);
         } else {
             Score oldValue = this.score.Clone();
             this.score.addDroppedBlock();
