@@ -22,6 +22,8 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.awt.Dimension;
 import java.awt.Event;
+import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -29,10 +31,12 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -77,7 +81,13 @@ public class Window extends JFrame {
     private JLabel scoreValue;
     private JLabel blocksDroppedLabel;
     private JLabel blocksDroppedValue;
-    
+    private JLayeredPane layeredPanel;
+    private JLabel layeredLabel;
+    private JPanel aiPanel;
+    private JLabel aiLabel;
+    private JLabel aiVelocityLabel;
+    private JLabel aiVelocityValue;
+
     public Window() {
         this(MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6)));
     }
@@ -93,7 +103,6 @@ public class Window extends JFrame {
     }
     
     private void initializeTetris() {
-        this.velocities = defaultVelocities.iterator();
         this.engine = new TetrisEngine();
         this.ai = new TetrisAI(this.executor);
         this.aiExecutor = new NewAIExecutor(100, ai, engine);
@@ -117,6 +126,29 @@ public class Window extends JFrame {
                 scoreValue.setText(String.format("%06d", score.getScore()));
                 removeLinesValue.setText(String.format("%06d", score.getLinesRemoved()));
                 blocksDroppedValue.setText(String.format("%06d", score.getBlocksDropped()));
+            }
+        });
+        this.engine.addPropertyChangeListener("state", new SwingPropertyChangeListener() {
+
+            @Override
+            protected void onPropertyChange(PropertyChangeEvent evt) {
+                GameState state = (GameState) evt.getNewValue();
+                switch (state) {
+                    case GAMEOVER:
+                        layeredLabel.setText("GAME OVER");
+                        setLabelToMaxSize(layeredLabel);
+                        controlsPanel.setControlLabel(0, "Restart");
+                        break;
+                    case PAUSED:
+                        layeredLabel.setText("PAUSED");
+                        setLabelToMaxSize(layeredLabel);
+                        controlsPanel.setControlLabel(0, "Resume");
+                        break;
+                    case PLAYING:
+                        layeredLabel.setText("");
+                        controlsPanel.setControlLabel(0, "Pause");
+                        break;
+                }
             }
         });
     }
@@ -164,7 +196,6 @@ public class Window extends JFrame {
         this.sidebarPane = new JPanel();
         this.sidebarPane.setMaximumSize(new Dimension(size.width, Short.MAX_VALUE));
         this.sidebarPane.setLayout(new BoxLayout(this.sidebarPane, BoxLayout.PAGE_AXIS));
-        this.sidebarPane.add(Box.createRigidArea(new Dimension(0, 5)));
         this.sidebarPane.add(this.previewPane);
         this.scoreLabel = new JLabel("Score");
         this.scoreValue = new JLabel();
@@ -176,12 +207,14 @@ public class Window extends JFrame {
         this.sidebarPane.add(createLinePanel(this.scoreLabel, this.scoreValue));
         this.sidebarPane.add(createLinePanel(this.removeLinesLabel, this.removeLinesValue));
         this.sidebarPane.add(createLinePanel(this.blocksDroppedLabel, this.blocksDroppedValue));
+        this.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
         {
+            JLabel label = new JLabel("Controls");
+            label.setFont(label.getFont().deriveFont(Font.BOLD));
+            
             JPanel panel = new JPanel();
             panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-            panel.add(Box.createHorizontalGlue());
-            panel.add(new JLabel("Controls"));
-            panel.add(Box.createHorizontalGlue());
+            panel.add(label);
             this.sidebarPane.add(panel);
         }
         
@@ -202,28 +235,81 @@ public class Window extends JFrame {
         this.controlsPanel.disableControl(6);
         
         this.sidebarPane.add(this.controlsPanel);
+
+        this.aiLabel = new JLabel("AI");
+        this.aiLabel.setVisible(false);
+        this.aiLabel.setFont(this.aiLabel.getFont().deriveFont(Font.BOLD));
+        this.aiVelocityLabel = new JLabel("AI Velocity");
+        this.aiVelocityValue = new JLabel();
         
+        this.aiPanel = new JPanel();
+        this.aiPanel.setLayout(new BoxLayout(this.aiPanel, BoxLayout.LINE_AXIS));
+        this.aiPanel.setVisible(false);
+        
+        this.aiPanel.add(this.aiVelocityLabel);
+        this.aiPanel.add(Box.createHorizontalGlue());
+        this.aiPanel.add(this.aiVelocityValue);
+        
+        this.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
+        this.sidebarPane.add(this.aiLabel);
+        this.sidebarPane.add(this.aiPanel);
+
         this.sidebarPane.add(Box.createVerticalGlue());
-        this.sidebarPane.add(Box.createRigidArea(new Dimension(0, 5)));
 
         this.boardPane = new BoardPane(this.drawer, this.engine);
         this.boardPane.setPreferredSize(new Dimension(this.engine.defs.width*25, this.engine.defs.height*25));
         
+        this.layeredLabel = new JLabel();
+        this.layeredLabel.setFont(this.layeredLabel.getFont().deriveFont(Font.BOLD));
+        this.layeredLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        
+                
+        this.layeredPanel = new JLayeredPane();
+        this.layeredPanel.setLayout(null);
+        this.layeredPanel.setPreferredSize(this.boardPane.getPreferredSize());
+        Insets insets = this.layeredPanel.getInsets();
+        this.boardPane.setBounds(insets.left, insets.top, this.boardPane.getPreferredSize().width, 
+                                                       this.boardPane.getPreferredSize().height);
+        this.layeredLabel.setBounds(insets.left, insets.top, this.boardPane.getPreferredSize().width, 
+                                                       this.boardPane.getPreferredSize().height);
+        
+        this.layeredPanel.add(this.layeredLabel);
+        this.layeredPanel.add(this.boardPane);
+        this.layeredPanel.setLayer(this.layeredLabel, 1);
+        this.layeredPanel.setLayer(this.boardPane, 1);
 
+        
         this.contentPane = new JPanel();
         this.contentPane.setLayout(new BoxLayout(this.contentPane, BoxLayout.LINE_AXIS));
-        this.contentPane.add(Box.createRigidArea(new Dimension(5, 0)));
-        this.contentPane.add(this.boardPane);
+        this.contentPane.add(this.layeredPanel);
         this.contentPane.add(Box.createRigidArea(new Dimension(10, 0)));
         this.contentPane.add(this.sidebarPane);
-        this.contentPane.add(Box.createRigidArea(new Dimension(5, 0)));
 
+        this.contentPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         this.add(this.contentPane);
-        
-        
+
         this.setTitle("Tetris");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.addKeyListener(new KeyAdapterImpl());
+    }
+    
+    private static void setLabelToMaxSize(JLabel label) {
+        Font labelFont = label.getFont();
+        String labelText = label.getText();
+
+        int stringWidth = label.getFontMetrics(labelFont).stringWidth(labelText);
+        int componentWidth = label.getWidth();
+
+        // Find out how much the font can grow in width.
+        float widthRatio = (float)componentWidth / (float)stringWidth;
+        float newFontSize = labelFont.getSize() * widthRatio;
+        int componentHeight = label.getHeight();
+
+        // Pick a new font size so it will not be larger than the height of label.
+        float fontSizeToUse = Math.min(newFontSize, componentHeight);
+
+        // Set the label's font size to the newly determined size.
+        label.setFont(labelFont.deriveFont(fontSizeToUse));
     }
 
     private JPanel createLinePanel(JLabel label, JLabel value) {
@@ -246,16 +332,15 @@ public class Window extends JFrame {
         @Override
         public void keyPressed(KeyEvent e) {
             if (konamiCode.consume(e)) {
-                // Board.this.setGameStatus("konami!");
                 System.out.println("konami");
             }
-            // if (!Board.this.isRunning || Board.this.curPiece.getShape() == Tetrominoes.NoShape) {
-            //     return;
-            // }
 
             switch (e.getKeyCode()) {
                 case KeyEvent.VK_A:
                     if (aiExecutor.isRunning()) {
+                        aiPanel.setVisible(false);
+                        aiLabel.setVisible(false);
+                        
                         controlsPanel.setControlLabel(5, "Activate AI");
                         for (int i = 1; i < 5; i++) {
                             controlsPanel.enableControl(i);
@@ -263,19 +348,22 @@ public class Window extends JFrame {
                         controlsPanel.disableControl(6);
                         aiExecutor.stop();
                     } else {
+                        aiPanel.setVisible(true);
+                        aiLabel.setVisible(true);
+
                         controlsPanel.setControlLabel(5, "Deactivate AI");
                         for (int i = 1; i < 5; i++) {
                             controlsPanel.disableControl(i);
                         }
                         controlsPanel.enableControl(6);
                         velocities = defaultVelocities.iterator();
-                        aiExecutor.setDelay(velocities.next());
+                        setNextAIVelocity();
                         aiExecutor.start();
                     }
                     break;
                 case KeyEvent.VK_V:
                     if (aiExecutor.isRunning()) {
-                        aiExecutor.setDelay(velocities.next());
+                        setNextAIVelocity();
                     }
                     break;
                 case KeyEvent.VK_P:
@@ -316,7 +404,12 @@ public class Window extends JFrame {
         }
     }
 
-    
+    private void setNextAIVelocity() {
+        int velocity = velocities.next();
+        aiVelocityValue.setText(Integer.toString(velocity));
+        aiExecutor.setDelay(velocity);
+    }
+
     public static void main(String[] args) {
         try {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -332,6 +425,7 @@ public class Window extends JFrame {
                 Window window = new Window();
                 window.setLocationRelativeTo(null);
                 window.setVisible(true);
+                window.setResizable(false);
             }
         });
     }
