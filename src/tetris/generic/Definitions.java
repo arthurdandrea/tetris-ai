@@ -21,7 +21,6 @@ import com.google.common.collect.Iterators;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import tetris.ai.BlockPosition;
 
 /**
  *

@@ -1,4 +1,4 @@
-package tetris.ai;
+package tetris.generic;
 
 import java.util.Objects;
 import tetris.generic.Tetromino.Type;

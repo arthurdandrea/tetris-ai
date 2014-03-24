@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.logging.Logger;
+import tetris.generic.BlockPosition;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngine.GameState;
 import tetris.generic.Tetromino;
