@@ -24,9 +24,9 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import tetris.generic.BlockMover;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
-import tetris.generic.TetrisEngine.GameState;
 import tetris.util.ExecutorServiceRule;
 
 /**
@@ -55,7 +55,9 @@ public class TetrisAITest {
     public void testProcess() throws InterruptedException, ExecutionException {
         int i;
         for (i = 0; i < 1000 && engine.getActiveblock() != null; i++) {
-            ai.process(engine).get();
+            BlockMover mover = ai.process(engine).get();
+            if (mover != null)
+                mover.slam();
         }
         Score score = engine.getScore();
         System.out.printf("iterations: %d\nscore: %d\nlinesRemoved: %d\n", i, score.getScore(), score.getLinesRemoved());
