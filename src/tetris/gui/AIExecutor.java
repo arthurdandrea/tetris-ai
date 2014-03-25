@@ -19,36 +19,36 @@ package tetris.gui;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Timer;
 import tetris.ai.AbstractAI;
+import tetris.generic.BlockMover;
 import tetris.generic.TetrisEngine;
 
 /**
  *
  * @author Arthur D'Andréa Alemar
  */
-public final class NewAIExecutor {
-    private static final Logger logger = Logger.getLogger(NewAIExecutor.class.getName());
+public final class AIExecutor {
+    private static final Logger logger = Logger.getLogger(AIExecutor.class.getName());
 
     private final ActionListenerImpl actionListenerImpl = new ActionListenerImpl();
     private final FutureCallbackImpl futureCallbackImpl = new FutureCallbackImpl();
-    private final FutureCallbackIteratorImpl futureCallbackIteratorImpl = new FutureCallbackIteratorImpl();
     
     private final AbstractAI ai;
     private final TetrisEngine engine;
     private final Timer timer;
-    private Iterator<Void> iterator;
+    private BlockMover mover;
     private boolean running;
     private int delay;
 
-    public NewAIExecutor(int delay, AbstractAI ai, TetrisEngine engine) {
+    public AIExecutor(int delay, AbstractAI ai, TetrisEngine engine) {
         this.running = false;
-        this.iterator = null;
+        this.mover = null;
         
         this.timer = new Timer(delay, actionListenerImpl);
         this.ai = ai;
@@ -88,26 +88,31 @@ public final class NewAIExecutor {
     private class ActionListenerImpl implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (running && iterator != null && iterator.hasNext()) {
-                iterator.next();
+            if (running && mover != null && mover.hasMoreMoves()) {
+                if (delay == 0) {
+                    mover.slam();
+                } else {
+                    mover.move();
+                }
             } else {
-                iterator = null;
+                mover = null;
                 timer.stop();
                 if (running) {
-                    if (delay == 0) {
-                        Futures.addCallback(ai.process(engine), futureCallbackImpl);
-                    } else {
-                        Futures.addCallback(ai.processIterator(engine), futureCallbackIteratorImpl);
-                    }
+                    Futures.addCallback(ai.process(engine), futureCallbackImpl);
                 }
             }
         }
     }
     
-    private class FutureCallbackImpl implements FutureCallback<Void> {
+    private class FutureCallbackImpl implements FutureCallback<BlockMover> {
         @Override
-        public void onSuccess(Void iterator) {
+        public void onSuccess(BlockMover mover) {
             if (running) {
+                if (mover != null && delay == 0) {
+                    mover.slam();
+                } else {
+                    AIExecutor.this.mover = mover;
+                }
                 timer.restart();
             }
         }
@@ -116,24 +121,6 @@ public final class NewAIExecutor {
         public void onFailure(Throwable t) {
             logger.log(Level.SEVERE, "error while processing ai", t);
         }
-
-    }
-    
-    private class FutureCallbackIteratorImpl implements FutureCallback<Iterator<Void>> {
-
-        @Override
-        public void onSuccess(Iterator<Void> iterator) {
-            if (running) {
-                NewAIExecutor.this.iterator = iterator;
-                timer.restart();
-            }
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            logger.log(Level.SEVERE, "error while processing ai", t);
-        }
-
     }
 
 }

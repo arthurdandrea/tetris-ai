@@ -73,7 +73,7 @@ public class Window extends JFrame {
     private BoardPane boardPane;
     private JPanel contentPane;
     private JPanel sidebarPane;
-    private NewAIExecutor aiExecutor;
+    private AIExecutor aiExecutor;
     private ControlsPanel controlsPanel;
     private JLabel removeLinesLabel;
     private JLabel removeLinesValue;
@@ -104,7 +104,7 @@ public class Window extends JFrame {
     private void initializeTetris() {
         this.engine = new TetrisEngine();
         this.ai = new TetrisAI(this.executor);
-        this.aiExecutor = new NewAIExecutor(100, ai, engine);
+        this.aiExecutor = new AIExecutor(100, ai, engine);
 
         this.engine.addPropertyChangeListener("blocks", new SwingPropertyChangeListener() {
             @Override
@@ -128,7 +128,6 @@ public class Window extends JFrame {
             }
         });
         this.engine.addPropertyChangeListener("state", new SwingPropertyChangeListener() {
-
             @Override
             protected void onPropertyChange(PropertyChangeEvent evt) {
                 GameState state = (GameState) evt.getNewValue();
