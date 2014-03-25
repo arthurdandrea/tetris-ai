@@ -71,23 +71,25 @@ public class Window extends JFrame {
     private TetrisEngine engine;
     private AbstractAI ai;
     private ListeningExecutorService executor;
-    private BoardPane boardPane;
-    private JPanel contentPane;
+    private BoardPane board;
+    private JPanel lineContentPanel;
     private JPanel sidebarPane;
     private AIExecutor aiExecutor;
     private ControlsPanel controlsPanel;
+    
+    private JLabel mainLabel;
     private JLabel removeLinesLabel;
     private JLabel removeLinesValue;
     private JLabel scoreLabel;
     private JLabel scoreValue;
     private JLabel blocksDroppedLabel;
     private JLabel blocksDroppedValue;
-    private JLayeredPane layeredPanel;
-    private JLabel layeredLabel;
+    
     private JPanel aiPanel;
     private JLabel aiLabel;
     private JLabel aiVelocityLabel;
     private JLabel aiVelocityValue;
+    private JPanel pageContentPanel;
 
     public Window() {
         this(MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6)));
@@ -110,7 +112,7 @@ public class Window extends JFrame {
         this.engine.addPropertyChangeListener("blocks", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
-                boardPane.repaint();
+                board.repaint();
             }
         }));
         this.engine.addPropertyChangeListener("nextblock", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
@@ -134,17 +136,15 @@ public class Window extends JFrame {
                 GameState state = (GameState) evt.getNewValue();
                 switch (state) {
                     case GAMEOVER:
-                        layeredLabel.setText("GAME OVER");
-                        setLabelToMaxSize(layeredLabel);
+                        mainLabel.setText("Tetris - GAME OVER");
                         controlsPanel.setControlLabel(0, "Restart");
                         break;
                     case PAUSED:
-                        layeredLabel.setText("PAUSED");
-                        setLabelToMaxSize(layeredLabel);
+                        mainLabel.setText("Tetris - PAUSED");
                         controlsPanel.setControlLabel(0, "Resume");
                         break;
                     case PLAYING:
-                        layeredLabel.setText("");
+                        mainLabel.setText("Tetris");
                         controlsPanel.setControlLabel(0, "Pause");
                         break;
                 }
@@ -191,7 +191,6 @@ public class Window extends JFrame {
         this.previewPane.setMinimumSize(size);
         this.previewPane.setMaximumSize(size);
 
-        
         this.sidebarPane = new JPanel();
         this.sidebarPane.setMaximumSize(new Dimension(size.width, Short.MAX_VALUE));
         this.sidebarPane.setLayout(new BoxLayout(this.sidebarPane, BoxLayout.PAGE_AXIS));
@@ -255,60 +254,41 @@ public class Window extends JFrame {
 
         this.sidebarPane.add(Box.createVerticalGlue());
 
-        this.boardPane = new BoardPane(this.drawer, this.engine);
-        this.boardPane.setPreferredSize(new Dimension(this.engine.defs.width*25, this.engine.defs.height*25));
+        this.mainLabel = new JLabel("Tetris");
+        this.mainLabel.setFont(this.mainLabel.getFont().deriveFont(this.mainLabel.getFont().getSize2D() * 2.0f));
 
-        this.layeredLabel = new JLabel();
-        this.layeredLabel.setFont(this.layeredLabel.getFont().deriveFont(Font.BOLD));
-        this.layeredLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        this.board = new BoardPane(this.drawer, this.engine);
+        this.board.setPreferredSize(new Dimension(this.engine.defs.width*25, this.engine.defs.height*25));
+        this.board.addKeyListener(new KeyAdapterImpl());
+        this.board.setFocusable(true);
 
-        this.layeredPanel = new JLayeredPane();
-        this.layeredPanel.setLayout(null);
-        this.layeredPanel.setPreferredSize(this.boardPane.getPreferredSize());
-        Insets insets = this.layeredPanel.getInsets();
-        this.boardPane.setBounds(insets.left, insets.top, this.boardPane.getPreferredSize().width, 
-                                                       this.boardPane.getPreferredSize().height);
-        this.layeredLabel.setBounds(insets.left, insets.top, this.boardPane.getPreferredSize().width, 
-                                                       this.boardPane.getPreferredSize().height);
+        this.lineContentPanel = new JPanel();
+        this.lineContentPanel.setLayout(new BoxLayout(this.lineContentPanel, BoxLayout.LINE_AXIS));
+        this.lineContentPanel.add(this.board);
+        this.lineContentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        this.lineContentPanel.add(this.sidebarPane);
 
-        this.layeredPanel.add(this.layeredLabel);
-        this.layeredPanel.add(this.boardPane);
-        this.layeredPanel.setLayer(this.layeredLabel, 1);
-        this.layeredPanel.setLayer(this.boardPane, 1);
-
-        this.contentPane = new JPanel();
-        this.contentPane.setLayout(new BoxLayout(this.contentPane, BoxLayout.LINE_AXIS));
-        this.contentPane.add(this.layeredPanel);
-        this.contentPane.add(Box.createRigidArea(new Dimension(10, 0)));
-        this.contentPane.add(this.sidebarPane);
-
-        this.contentPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        this.add(this.contentPane);
+        this.pageContentPanel = new JPanel();
+        this.pageContentPanel.setLayout(new BoxLayout(this.pageContentPanel, BoxLayout.PAGE_AXIS));
+        this.pageContentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        this.pageContentPanel.add(createCentralizedPanel(this.mainLabel));
+        this.pageContentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        this.pageContentPanel.add(this.lineContentPanel);
+        this.add(this.pageContentPanel);
 
         this.setTitle("Tetris");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.addKeyListener(new KeyAdapterImpl());
     }
     
-    private static void setLabelToMaxSize(JLabel label) {
-        Font labelFont = label.getFont();
-        String labelText = label.getText();
-
-        int stringWidth = label.getFontMetrics(labelFont).stringWidth(labelText);
-        int componentWidth = label.getWidth();
-
-        // Find out how much the font can grow in width.
-        float widthRatio = (float)componentWidth / (float)stringWidth;
-        float newFontSize = labelFont.getSize() * widthRatio;
-        int componentHeight = label.getHeight();
-
-        // Pick a new font size so it will not be larger than the height of label.
-        float fontSizeToUse = Math.min(newFontSize, componentHeight);
-
-        // Set the label's font size to the newly determined size.
-        label.setFont(labelFont.deriveFont(fontSizeToUse));
+    private JPanel createCentralizedPanel(JLabel label) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
+        panel.add(Box.createHorizontalGlue());
+        panel.add(label);
+        panel.add(Box.createHorizontalGlue());
+        return panel;
     }
-
+    
     private JPanel createLinePanel(JLabel label, JLabel value) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
@@ -416,7 +396,6 @@ public class Window extends JFrame {
                 Window window = new Window();
                 window.setLocationRelativeTo(null);
                 window.setVisible(true);
-                window.setResizable(false);
             }
         });
     }
