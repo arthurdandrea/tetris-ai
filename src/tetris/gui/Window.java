@@ -29,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
 import javax.swing.BorderFactory;
@@ -51,7 +52,7 @@ import tetris.ai.TetrisAI;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngine.GameState;
-import tetris.util.functional.SwingPropertyChangeListener;
+import tetris.util.functional.PropertyListeners;
 
 /**
  *
@@ -106,30 +107,30 @@ public class Window extends JFrame {
         this.ai = new TetrisAI(this.executor);
         this.aiExecutor = new AIExecutor(100, ai, engine);
 
-        this.engine.addPropertyChangeListener("blocks", new SwingPropertyChangeListener() {
+        this.engine.addPropertyChangeListener("blocks", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
-            public void onPropertyChange(PropertyChangeEvent evt) {
+            public void propertyChange(PropertyChangeEvent evt) {
                 boardPane.repaint();
             }
-        });
-        this.engine.addPropertyChangeListener("nextblock", new SwingPropertyChangeListener() {
+        }));
+        this.engine.addPropertyChangeListener("nextblock", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
-            public void onPropertyChange(PropertyChangeEvent evt) {
+            public void propertyChange(PropertyChangeEvent evt) {
                 previewPane.setPiece(Window.this.engine.getNextblock());
             }
-        });
-        this.engine.addPropertyChangeListener("score", new SwingPropertyChangeListener() {
+        }));
+        this.engine.addPropertyChangeListener("score", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
-            protected void onPropertyChange(PropertyChangeEvent evt) {
+            public void propertyChange(PropertyChangeEvent evt) {
                 Score score = engine.getScore();
                 scoreValue.setText(String.format("%06d", score.getScore()));
                 removeLinesValue.setText(String.format("%06d", score.getLinesRemoved()));
                 blocksDroppedValue.setText(String.format("%06d", score.getBlocksDropped()));
             }
-        });
-        this.engine.addPropertyChangeListener("state", new SwingPropertyChangeListener() {
+        }));
+        this.engine.addPropertyChangeListener("state", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
-            protected void onPropertyChange(PropertyChangeEvent evt) {
+            public void propertyChange(PropertyChangeEvent evt) {
                 GameState state = (GameState) evt.getNewValue();
                 switch (state) {
                     case GAMEOVER:
@@ -148,11 +149,11 @@ public class Window extends JFrame {
                         break;
                 }
             }
-        });
+        }));
     }
 
     private void initializeMenu() {
-        boolean isMac = System.getProperty("os.name").toLowerCase().indexOf("mac") != -1;
+        boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
         
         this.menuBar = new JMenuBar();
 	this.jogoMenu = new JMenu("Jogo");
@@ -225,13 +226,13 @@ public class Window extends JFrame {
             {"Activate AI", "a"},
             {"AI velocity", "v"}
         };
-        
+
         this.controlsPanel = new ControlsPanel();
         for (String[] label : labels) {
             this.controlsPanel.addControl(label[1], label[0]);
         }
         this.controlsPanel.disableControl(6);
-        
+
         this.sidebarPane.add(this.controlsPanel);
 
         this.aiLabel = new JLabel("AI");
@@ -239,15 +240,15 @@ public class Window extends JFrame {
         this.aiLabel.setFont(this.aiLabel.getFont().deriveFont(Font.BOLD));
         this.aiVelocityLabel = new JLabel("AI Velocity");
         this.aiVelocityValue = new JLabel();
-        
+
         this.aiPanel = new JPanel();
         this.aiPanel.setLayout(new BoxLayout(this.aiPanel, BoxLayout.LINE_AXIS));
         this.aiPanel.setVisible(false);
-        
+
         this.aiPanel.add(this.aiVelocityLabel);
         this.aiPanel.add(Box.createHorizontalGlue());
         this.aiPanel.add(this.aiVelocityValue);
-        
+
         this.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
         this.sidebarPane.add(this.aiLabel);
         this.sidebarPane.add(this.aiPanel);
@@ -256,12 +257,11 @@ public class Window extends JFrame {
 
         this.boardPane = new BoardPane(this.drawer, this.engine);
         this.boardPane.setPreferredSize(new Dimension(this.engine.defs.width*25, this.engine.defs.height*25));
-        
+
         this.layeredLabel = new JLabel();
         this.layeredLabel.setFont(this.layeredLabel.getFont().deriveFont(Font.BOLD));
         this.layeredLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        
-                
+
         this.layeredPanel = new JLayeredPane();
         this.layeredPanel.setLayout(null);
         this.layeredPanel.setPreferredSize(this.boardPane.getPreferredSize());
@@ -270,13 +270,12 @@ public class Window extends JFrame {
                                                        this.boardPane.getPreferredSize().height);
         this.layeredLabel.setBounds(insets.left, insets.top, this.boardPane.getPreferredSize().width, 
                                                        this.boardPane.getPreferredSize().height);
-        
+
         this.layeredPanel.add(this.layeredLabel);
         this.layeredPanel.add(this.boardPane);
         this.layeredPanel.setLayer(this.layeredLabel, 1);
         this.layeredPanel.setLayer(this.boardPane, 1);
 
-        
         this.contentPane = new JPanel();
         this.contentPane.setLayout(new BoxLayout(this.contentPane, BoxLayout.LINE_AXIS));
         this.contentPane.add(this.layeredPanel);
