@@ -17,83 +17,98 @@
 
 package tetris.util;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Ordering;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.SettableFuture;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Objects;
-import java.util.concurrent.Executor;
-import tetris.util.functional.SubmitFunction;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 /**
  *
  * @author Arthur D'Andréa Alemar
  */
-public class FutureExtremes<F> extends FutureConsumer<F, F> {
-    
-    public static <F extends Comparable> ListenableFuture<F> calculate(Iterator<ListenableFuture<F>> iterator, Executor executor, Extreme direction) {
-        return calculate(iterator, executor, (Comparator<F>) Ordering.natural(), direction);
-    }
+final class FutureExtremes<T> {
+    private static final Logger logger = Logger.getLogger(FutureExtremes.class.getName());
 
-    public static <F> ListenableFuture<F> calculate(Iterator<ListenableFuture<F>> iterator, Executor executor, Comparator<F> comparator, Extreme direction) {
-        Objects.requireNonNull(iterator);
-        Objects.requireNonNull(executor);
-        Objects.requireNonNull(comparator);
-        Objects.requireNonNull(direction);
+    private final SettableFuture<T> future;
 
-        FutureExtremes<F> extremes = new FutureExtremes<>(comparator, direction == Extreme.MAX);
-        while (iterator.hasNext()) {
-            extremes.consume(iterator.next(), executor);
-        }
-        return extremes.end();
-    }
-    
-    public static <T, F> ListenableFuture<F> calculate(Iterator<T> iterator, Function<T, F> function, ListeningExecutorService executor, Comparator<F> comparator, Extreme direction) {
-        Objects.requireNonNull(iterator);
-        Objects.requireNonNull(function);
-        Objects.requireNonNull(executor);
-        return calculate(Iterators.transform(iterator, new SubmitFunction(executor, function)), executor, comparator, direction);
-    }
+    private int length;
+    private boolean haveEnded;
+    private int index;
 
-    public static <T, F extends Comparable> ListenableFuture<F> calculate(Iterator<T> iterator, Function<T, F> function, ListeningExecutorService executor, Extreme direction) {
-        return calculate(iterator, function, executor, (Comparator<F>) Ordering.natural(), direction);
-    }
-    
-    public static <T, F extends Comparable> ListenableFuture<F> calculate(Iterable<T> iterable, Function<T, F> function, ListeningExecutorService executor, Extreme direction) {
-        return calculate(iterable.iterator(), function, executor, direction);
-    }
-
-    public static <F extends Comparable> FutureExtremes<F> max() {
-        return new FutureExtremes<>((Comparator<F>) Ordering.natural(), true);
-    }
-
-    public static <F> FutureExtremes<F> max(Comparator<F> comparator) {
-        return new FutureExtremes<>(comparator, true);
-    }
-
-    public static <F extends Comparable> FutureExtremes<F> min() {
-        return new FutureExtremes<>((Comparator<F>) Ordering.natural(), false);
-    }
-    
-    public static <F> FutureExtremes<F> min(Comparator<F> comparator) {
-        return new FutureExtremes<>(comparator, false);
-    }
-
-    private final Comparator<F> comparator;
+    private final Comparator<T> comparator;
     private final boolean isMax;
-    private F current;
+    private T current;
+    private final Iterator<ListenableFuture<T>> iterator;
+    private final ListeningExecutorService executor;
 
-    private FutureExtremes(Comparator<F> comparator, boolean isMax) {
+    FutureExtremes(Iterator<ListenableFuture<T>> iterator, Comparator<T> comparator, ListeningExecutorService executor, boolean isMax) {
+        this.future = SettableFuture.create();
+        this.iterator = iterator;
+        this.executor = executor;
         this.comparator = comparator;
-        this.current = null;
         this.isMax = isMax;
+        
+        this.current = null;
+        this.haveEnded = false;
+        this.index = 0;
+        this.length = 0;
+    }
+    
+    synchronized ListenableFuture<T> start() {
+        this.consume(1);
+        return this.future;
     }
 
-    @Override
-    protected void process(F result) {
+    private synchronized void consume(int times) {
+        assert times > 0;
+        while (this.iterator.hasNext() && times > 0) {
+            this.consume(this.iterator.next());
+            times--;
+        }
+        if (!this.iterator.hasNext()) {
+            this.end();
+        }
+    }
+
+    private synchronized void consume(ListenableFuture<T> f) {
+        assert !this.future.isDone();
+
+        Futures.addCallback(f, new FutureCallbackImpl());
+        this.length++;
+    }
+
+    private synchronized void end() {
+        this.haveEnded = true;
+        if (this.index == this.length && !this.future.isDone()) {
+            this.future.set(this.current);
+        }
+    }
+    
+    private synchronized void onFailure(Throwable t) {
+        this.index++;
+        if (!future.setException(t)) {
+            logger.log(Level.WARNING, "god help us all", t);
+        }
+    }
+
+    private synchronized void onSuccess(T result) {
+        this.index++;
+        if (!future.isDone()) {
+            this.process(result);
+            if (this.haveEnded && this.index == this.length) {
+                this.future.set(this.current);
+            } else {
+                this.consume(1);
+            }
+        }
+    }
+
+    private void process(T result) {
         Objects.requireNonNull(result);
         if (current == null) {
             current = result;
@@ -104,12 +119,17 @@ public class FutureExtremes<F> extends FutureConsumer<F, F> {
             }
         }
     }
+    
+    private class FutureCallbackImpl implements FutureCallback<T> {
+        @Override
+        public void onSuccess(T result) {
+            FutureExtremes.this.onSuccess(result);
+        }
 
-    @Override
-    protected F getResult() {
-        return this.current;
-    }
-    public enum Extreme {
-        MIN, MAX
-    }
+        @Override
+        public void onFailure(Throwable t) {
+            FutureExtremes.this.onFailure(t);
+        }
+    } 
+
 }

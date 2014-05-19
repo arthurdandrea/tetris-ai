@@ -26,6 +26,7 @@ import java.util.logging.Logger;
  */
 public class BlockMover {
     private static final Logger logger = Logger.getLogger(BlockMover.class.getName());
+
     private final int initialRotation;
     private final BlockPosition position;
     private final TetrisEngine engine;
@@ -50,7 +51,7 @@ public class BlockMover {
 
     public void move() {
         if (this.end) {
-            return;
+            
         } else if (this.positionEnd) {
             if (!engine.keydown()) {
                 this.end = true;

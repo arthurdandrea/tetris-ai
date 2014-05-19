@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.awt.Dimension;
 import java.awt.Event;
 import java.awt.Font;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -32,18 +31,17 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -59,31 +57,23 @@ import tetris.util.functional.PropertyListeners;
  * @author Arthur D'Andréa Alemar
  */
 public class Window extends JFrame {
+    private static final Logger logger = Logger.getLogger(Window.class.getName());
     private static final Iterable<Integer> defaultVelocities = Iterables.cycle(99, 66, 33, 0);
     
-    private Iterator<Integer> velocities; 
-    private Drawer drawer;
-    private PreviewPiece previewPane;
+    private Iterator<Integer> velocities;
+
+    private GamePanel gameRight;
+    private GamePanel gameLeft;
+    
     private JMenuBar menuBar;
     private JMenu jogoMenu;
     private JMenuItem pauseItem;
     private JMenuItem restartItem;
-    private TetrisEngine engine;
-    private AbstractAI ai;
-    private ListeningExecutorService executor;
-    private BoardPane board;
+    
     private JPanel lineContentPanel;
-    private JPanel sidebarPane;
-    private AIExecutor aiExecutor;
     private ControlsPanel controlsPanel;
     
     private JLabel mainLabel;
-    private JLabel removeLinesLabel;
-    private JLabel removeLinesValue;
-    private JLabel scoreLabel;
-    private JLabel scoreValue;
-    private JLabel blocksDroppedLabel;
-    private JLabel blocksDroppedValue;
     
     private JPanel aiPanel;
     private JLabel aiLabel;
@@ -92,45 +82,21 @@ public class Window extends JFrame {
     private JPanel pageContentPanel;
 
     public Window() {
-        this(MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(6)));
-    }
-
-    public Window(ListeningExecutorService executor) {
-        this.executor = executor;
         initializeTetris();
         initializeMenu();
         initializeComponents();
-        this.engine.startengine();
+        this.gameRight.engine.startengine();
+        this.gameLeft.engine.startengine();
         this.pack();
+        this.gameLeft.aiExecutor.start();
     }
     
-    private void initializeTetris() {
-        this.engine = new TetrisEngine();
-        this.ai = new TetrisAI(this.executor);
-        this.aiExecutor = new AIExecutor(100, ai, engine);
-
-        this.engine.addPropertyChangeListener("blocks", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                board.repaint();
-            }
-        }));
-        this.engine.addPropertyChangeListener("nextblock", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                previewPane.setPiece(Window.this.engine.getNextblock());
-            }
-        }));
-        this.engine.addPropertyChangeListener("score", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
-            @Override
-            public void propertyChange(PropertyChangeEvent evt) {
-                Score score = engine.getScore();
-                scoreValue.setText(String.format("%06d", score.getScore()));
-                removeLinesValue.setText(String.format("%06d", score.getLinesRemoved()));
-                blocksDroppedValue.setText(String.format("%06d", score.getBlocksDropped()));
-            }
-        }));
-        this.engine.addPropertyChangeListener("state", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
+    private void initializeTetris() {        
+        
+        this.gameRight = new GamePanel();
+        this.gameLeft = new GamePanel();
+        
+        this.gameRight.engine.addPropertyChangeListener("state", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 GameState state = (GameState) evt.getNewValue();
@@ -183,29 +149,7 @@ public class Window extends JFrame {
     }
 
     private void initializeComponents() {
-        this.drawer = new Drawer();
-
-        Dimension size = new Dimension(20*4, 20*4);
-        this.previewPane = new PreviewPiece(this.drawer);
-        this.previewPane.setPreferredSize(size);
-        this.previewPane.setMinimumSize(size);
-        this.previewPane.setMaximumSize(size);
-
-        this.sidebarPane = new JPanel();
-        this.sidebarPane.setMaximumSize(new Dimension(size.width, Short.MAX_VALUE));
-        this.sidebarPane.setLayout(new BoxLayout(this.sidebarPane, BoxLayout.PAGE_AXIS));
-        this.sidebarPane.add(this.previewPane);
-        this.scoreLabel = new JLabel("Score");
-        this.scoreValue = new JLabel();
-        this.removeLinesLabel = new JLabel("Removed Lines");
-        this.removeLinesValue = new JLabel();
-        this.blocksDroppedLabel = new JLabel("Blocks Dropped");
-        this.blocksDroppedValue = new JLabel();
-        
-        this.sidebarPane.add(createLinePanel(this.scoreLabel, this.scoreValue));
-        this.sidebarPane.add(createLinePanel(this.removeLinesLabel, this.removeLinesValue));
-        this.sidebarPane.add(createLinePanel(this.blocksDroppedLabel, this.blocksDroppedValue));
-        this.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
+        this.gameRight.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
         {
             JLabel label = new JLabel("Controls");
             label.setFont(label.getFont().deriveFont(Font.BOLD));
@@ -213,7 +157,7 @@ public class Window extends JFrame {
             JPanel panel = new JPanel();
             panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
             panel.add(label);
-            this.sidebarPane.add(panel);
+            this.gameRight.sidebarPane.add(panel);
         }
         
         String labels[][] = {
@@ -230,9 +174,10 @@ public class Window extends JFrame {
         for (String[] label : labels) {
             this.controlsPanel.addControl(label[1], label[0]);
         }
+        this.controlsPanel.disableControl(5);
         this.controlsPanel.disableControl(6);
 
-        this.sidebarPane.add(this.controlsPanel);
+        this.gameRight.sidebarPane.add(this.controlsPanel);
 
         this.aiLabel = new JLabel("AI");
         this.aiLabel.setVisible(false);
@@ -248,25 +193,24 @@ public class Window extends JFrame {
         this.aiPanel.add(Box.createHorizontalGlue());
         this.aiPanel.add(this.aiVelocityValue);
 
-        this.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
-        this.sidebarPane.add(this.aiLabel);
-        this.sidebarPane.add(this.aiPanel);
-
-        this.sidebarPane.add(Box.createVerticalGlue());
+        this.gameRight.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
+        this.gameRight.sidebarPane.add(this.aiLabel);
+        this.gameRight.sidebarPane.add(this.aiPanel);
 
         this.mainLabel = new JLabel("Tetris");
         this.mainLabel.setFont(this.mainLabel.getFont().deriveFont(this.mainLabel.getFont().getSize2D() * 2.0f));
 
-        this.board = new BoardPane(this.drawer, this.engine);
-        this.board.setPreferredSize(new Dimension(this.engine.defs.width*25, this.engine.defs.height*25));
-        this.board.addKeyListener(new KeyAdapterImpl());
-        this.board.setFocusable(true);
+        this.addKeyListener(new KeyAdapterImpl());
 
         this.lineContentPanel = new JPanel();
         this.lineContentPanel.setLayout(new BoxLayout(this.lineContentPanel, BoxLayout.LINE_AXIS));
-        this.lineContentPanel.add(this.board);
+        this.lineContentPanel.add(this.gameLeft.board);
         this.lineContentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-        this.lineContentPanel.add(this.sidebarPane);
+        this.lineContentPanel.add(this.gameLeft.sidebarPane);
+        this.lineContentPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        this.lineContentPanel.add(this.gameRight.board);
+        this.lineContentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        this.lineContentPanel.add(this.gameRight.sidebarPane);
 
         this.pageContentPanel = new JPanel();
         this.pageContentPanel.setLayout(new BoxLayout(this.pageContentPanel, BoxLayout.PAGE_AXIS));
@@ -280,7 +224,7 @@ public class Window extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
     
-    private JPanel createCentralizedPanel(JLabel label) {
+    private static JPanel createCentralizedPanel(JLabel label) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
         panel.add(Box.createHorizontalGlue());
@@ -288,87 +232,79 @@ public class Window extends JFrame {
         panel.add(Box.createHorizontalGlue());
         return panel;
     }
-    
-    private JPanel createLinePanel(JLabel label, JLabel value) {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS));
-        panel.add(label);
-        panel.add(Box.createRigidArea(new Dimension(10, 0)));
-        panel.add(Box.createHorizontalGlue());
-        panel.add(value);
-        return panel;
-    }
-    
+        
     private class KeyAdapterImpl extends KeyAdapter {
         private final KonamiCode konamiCode;
 
         public KeyAdapterImpl() {
             this.konamiCode = new KonamiCode();
         }
-        
+
         @Override
         public void keyPressed(KeyEvent e) {
             if (konamiCode.consume(e)) {
-                System.out.println("konami");
+                controlsPanel.enableControl(5);
             }
 
             switch (e.getKeyCode()) {
                 case KeyEvent.VK_A:
-                    if (aiExecutor.isRunning()) {
-                        aiPanel.setVisible(false);
-                        aiLabel.setVisible(false);
-                        
-                        controlsPanel.setControlLabel(5, "Activate AI");
-                        for (int i = 1; i < 5; i++) {
-                            controlsPanel.enableControl(i);
-                        }
-                        controlsPanel.disableControl(6);
-                        aiExecutor.stop();
-                    } else {
-                        aiPanel.setVisible(true);
-                        aiLabel.setVisible(true);
+                    if (controlsPanel.isEnabledControl(5)) {
+                        if (gameRight.aiExecutor.isRunning()) {
+                            aiPanel.setVisible(false);
+                            aiLabel.setVisible(false);
 
-                        controlsPanel.setControlLabel(5, "Deactivate AI");
-                        for (int i = 1; i < 5; i++) {
-                            controlsPanel.disableControl(i);
+                            controlsPanel.setControlLabel(5, "Activate AI");
+                            for (int i = 1; i < 5; i++) {
+                                controlsPanel.enableControl(i);
+                            }
+                            controlsPanel.disableControl(6);
+                            gameRight.aiExecutor.stop();
+                        } else {
+                            aiPanel.setVisible(true);
+                            aiLabel.setVisible(true);
+
+                            controlsPanel.setControlLabel(5, "Deactivate AI");
+                            for (int i = 1; i < 5; i++) {
+                                controlsPanel.disableControl(i);
+                            }
+                            controlsPanel.enableControl(6);
+                            velocities = defaultVelocities.iterator();
+                            setNextAIVelocity();
+                            gameRight.aiExecutor.start();
                         }
-                        controlsPanel.enableControl(6);
-                        velocities = defaultVelocities.iterator();
-                        setNextAIVelocity();
-                        aiExecutor.start();
                     }
                     break;
                 case KeyEvent.VK_V:
-                    if (aiExecutor.isRunning()) {
+                    if (gameRight.aiExecutor.isRunning()) {
                         setNextAIVelocity();
                     }
                     break;
                 case KeyEvent.VK_P:
-                    engine.tooglePause();
+                    gameRight.engine.tooglePause();
                     break;
                 case KeyEvent.VK_LEFT:
-                    if (engine.getState() == GameState.PLAYING && !aiExecutor.isRunning()) {
-                        engine.keyleft();
+                    if (gameRight.engine.getState() == GameState.PLAYING && !gameRight.aiExecutor.isRunning()) {
+                        gameRight.engine.keyleft();
                     }
                     break;
                 case KeyEvent.VK_RIGHT:
-                    if (engine.getState() == GameState.PLAYING && !aiExecutor.isRunning()) {
-                        engine.keyright();
+                    if (gameRight.engine.getState() == GameState.PLAYING && !gameRight.aiExecutor.isRunning()) {
+                        gameRight.engine.keyright();
                     }
                     break;
                 case KeyEvent.VK_DOWN:
-                    if (engine.getState() == GameState.PLAYING && !aiExecutor.isRunning()) {
-                        engine.keydown();
+                    if (gameRight.engine.getState() == GameState.PLAYING && !gameRight.aiExecutor.isRunning()) {
+                        gameRight.engine.keydown();
                     }
                     break;
                 case KeyEvent.VK_UP:
-                    if (engine.getState() == GameState.PLAYING && !aiExecutor.isRunning()) {
-                        engine.keyrotate();
+                    if (gameRight.engine.getState() == GameState.PLAYING && !gameRight.aiExecutor.isRunning()) {
+                        gameRight.engine.keyrotate();
                     }
                     break;
                 case KeyEvent.VK_SPACE:
-                    if (engine.getState() == GameState.PLAYING && !aiExecutor.isRunning()) {
-                        engine.keyslam();
+                    if (gameRight.engine.getState() == GameState.PLAYING && !gameRight.aiExecutor.isRunning()) {
+                        gameRight.engine.keyslam();
                     }
                     break;
             }
@@ -378,7 +314,7 @@ public class Window extends JFrame {
     private void setNextAIVelocity() {
         int velocity = velocities.next();
         aiVelocityValue.setText(Integer.toString(velocity));
-        aiExecutor.setDelay(velocity);
+        gameRight.aiExecutor.setDelay(velocity);
     }
 
     public static void main(String[] args) {

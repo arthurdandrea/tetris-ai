@@ -8,7 +8,7 @@ import java.util.Iterator;
 import tetris.generic.BlockPosition;
 import tetris.generic.Definitions;
 import tetris.generic.TetrisEngine;
-import tetris.util.FutureExtremes;
+import tetris.util.Util;
 import tetris.util.functional.CartesianProduct;
 import tetris.util.functional.CartesianProduct.Pair;
 
@@ -48,7 +48,7 @@ public class TetrisAI extends AbstractAI {
         Iterator<Pair<BlockPosition>>
                 cartesian = new CartesianProduct<>(currentPositions, nextPositions);
         
-        ListenableFuture<BestFit> futureBestFit = FutureExtremes.calculate(cartesian, new EvalPosition(engine), executor, FutureExtremes.Extreme.MAX);
+        ListenableFuture<BestFit> futureBestFit = Util.maxAsync(cartesian, new EvalPosition(engine), executor);
         return Futures.transform(futureBestFit, new Function<BestFit, BlockPosition>() {
             @Override
             public BlockPosition apply(BestFit input) {
@@ -57,8 +57,8 @@ public class TetrisAI extends AbstractAI {
         });
     }
 
-    private int evalPosition(byte[][] mockgrid, TetrisEngine engine, BlockPosition r) throws GameOverException {        
-        byte[][] bl = Definitions.blockdef[r.type.ordinal()][r.rot];
+    private int simulateDrop(byte[][] mockgrid, TetrisEngine engine, BlockPosition position) throws GameOverException {
+        byte[][] bl = Definitions.blockdef[position.type.ordinal()][position.rot];
         int cleared = 0;
 
         // Now we find the fitting HEIGHT by starting from the bottom and
@@ -84,7 +84,7 @@ public class TetrisAI extends AbstractAI {
                             fit_state = -1;
                         } else {
                             // Already filled, doesn't fit.
-                            if (mockgrid[i + r.bx][h + j] >= 1) {
+                            if (mockgrid[i + position.bx][h + j] >= 1) {
                                 fit_state = 0;
                             }
 
@@ -92,7 +92,7 @@ public class TetrisAI extends AbstractAI {
                             // might still be over it.
                             if (fit_state == 1) {
                                 for (int h1 = h + j - 1; h1 >= 0; h1--) {
-                                    if (mockgrid[i + r.bx][h1] >= 1) {
+                                    if (mockgrid[i + position.bx][h1] >= 1) {
                                         fit_state = 0;
                                         break;
                                     }
@@ -118,7 +118,7 @@ public class TetrisAI extends AbstractAI {
         for (int i = 0; i < 4; i++) {
             for (int j = 0; j < 4; j++) {
                 if (bl[j][i] == 1) {
-                    mockgrid[r.bx + i][h + j] = 2;
+                    mockgrid[position.bx + i][h + j] = 2;
                 }
             }
         }
@@ -158,8 +158,8 @@ public class TetrisAI extends AbstractAI {
 
         int cleared = 0;
         try {
-            cleared += this.evalPosition(mockgrid, engine, position1);
-            cleared += this.evalPosition(mockgrid, engine, position2);
+            cleared += this.simulateDrop(mockgrid, engine, position1);
+            cleared += this.simulateDrop(mockgrid, engine, position2);
         } catch (GameOverException e) {
             return new BestFit(position1, position2, Double.NEGATIVE_INFINITY);
         }

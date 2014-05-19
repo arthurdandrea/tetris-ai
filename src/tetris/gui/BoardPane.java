@@ -27,15 +27,18 @@ import tetris.generic.TetrisEngine;
  * @author Arthur D'Andréa Alemar
  */
 public class BoardPane extends JComponent {
+    private final int width;
+    private final int height;
 
     private final Drawer drawer;
     private final TetrisEngine engine;
-    private final Definitions defs;
     
     public BoardPane() {
-        this.defs = new Definitions(6, 22);
+        this.width = 6;
+        this.height = 22;
         this.drawer = new Drawer();
         this.engine = null;
+        this.setFocusable(true);
     }
 
     public BoardPane(TetrisEngine engine) {
@@ -43,7 +46,8 @@ public class BoardPane extends JComponent {
     }
 
     public BoardPane(Drawer drawer, TetrisEngine engine) {
-        this.defs = engine.defs;
+        this.width = engine.defs.width;
+        this.height = engine.defs.height;
         this.drawer = drawer;
         this.engine = engine;
     }
@@ -51,8 +55,8 @@ public class BoardPane extends JComponent {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        this.drawer.draw(g, this.getSize(), this.defs.width,
-                         this.defs.height, this.engine != null ? this.engine.getBlocks() : null);
+        this.drawer.draw(g, this.getSize(), this.width,
+                         this.height, this.engine != null ? this.engine.getBlocks() : null);
     }
     
 }

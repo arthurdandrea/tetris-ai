@@ -57,7 +57,12 @@ public class ControlsPanel extends JPanel {
         Control control = this.controls.get(i);
         control.panel.setVisible(true);
     }
-        
+    
+    public boolean isEnabledControl(int i) {
+        Control control = this.controls.get(i);
+        return control.panel.isVisible();
+    }
+
     private static class Control {
         private final JPanel panel;
         private final JLabel label;

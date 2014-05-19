@@ -106,27 +106,4 @@ public final class Drawer {
             }
         }
     }
-
-    public void drawSquare(Graphics graphic, int j, int i, Tetromino.Type shape, Dimension square) {
-        this.drawSquare(graphic, j, i, 0, 0, shape, square);
-    }
-    public void drawSquare(Graphics graphic, int i, int j, int deslocx, int deslocy, Tetromino.Type shape, Dimension square) {
-        final int x = deslocx + (i * square.width);
-        final int y = deslocy + (j * square.height);
-        final int yLinha = deslocy + ((j + 1) * square.height) - 1;
-        final int xLinha = deslocx + ((i + 1) * square.width) - 1;
-        final int ordinal = shape == null ? 0 : shape.ordinal() + 1;
-
-        graphic.setColor(colors[ordinal]);
-        graphic.fillRect(x + 1, y + 1, square.width - 2, square.height - 2);
-
-        graphic.setColor(brighterColors[ordinal]);
-        graphic.drawLine(x, yLinha, x, y);
-        
-        graphic.drawLine(x, y, xLinha, y);
-
-        graphic.setColor(darkerColors[ordinal]);
-        graphic.drawLine(x + 1, yLinha, xLinha, yLinha);
-        graphic.drawLine(xLinha, yLinha, xLinha, y + 1);
-    }
 }

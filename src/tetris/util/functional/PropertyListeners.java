@@ -20,7 +20,6 @@ package tetris.util.functional;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import javax.swing.SwingUtilities;
-import tetris.generic.TetrisEngine;
 
 /**
  *
@@ -31,7 +30,7 @@ public final class PropertyListeners  {
     public static PropertyChangeListener alwaysInSwing(PropertyChangeListener inner) {
         return new SwingListener(inner);
     }
-
+    
     private static class SwingListener implements PropertyChangeListener {
         private final PropertyChangeListener inner;
         SwingListener(PropertyChangeListener inner) {

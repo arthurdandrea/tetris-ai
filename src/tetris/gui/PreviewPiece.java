@@ -19,6 +19,7 @@ package tetris.gui;
 
 import java.awt.Graphics;
 import javax.swing.JComponent;
+import tetris.generic.Block;
 import tetris.generic.Tetromino;
 
 /**
@@ -32,6 +33,7 @@ public class PreviewPiece extends JComponent {
     public PreviewPiece() {
         this(new Drawer());
     }
+
     public PreviewPiece(Drawer drawer) {
         this.drawer = drawer;
     }
@@ -48,7 +50,19 @@ public class PreviewPiece extends JComponent {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        this.drawer.draw(g, this.getSize(), 4, 4, this.piece == null ? null : this.piece.array);
+        Block[][] array = this.piece == null ? null : this.piece.array;
+        if (array != null) {
+            array = transposeMatrix(array);
+        }
+        this.drawer.draw(g, this.getSize(), 4, 4, array);
+    }
+    
+    private static Block[][] transposeMatrix(Block [][] m){
+        Block[][] temp = new Block[m[0].length][m.length];
+        for (int i = 0; i < m.length; i++)
+            for (int j = 0; j < m[0].length; j++)
+            temp[j][i] = m[i][j];
+        return temp;
     }
 }
 
