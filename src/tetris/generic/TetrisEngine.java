@@ -13,6 +13,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * It also has observable properties: score, state, blocks, nextblock.
  */
 public final class TetrisEngine {
+    
+    public enum Move {
+        RIGHT, LEFT, ROTATE, DOWN, SLAM
+    }
+
     /**
      * Enum representation of the current game's state.
      */
