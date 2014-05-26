@@ -16,7 +16,6 @@
  */
 package tetris.net;
 
-import tetris.util.MyThread;
 import com.google.common.base.Function;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,10 +29,19 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngine.Move;
+import tetris.generic.TetrisEngine.MoveResult;
+import tetris.generic.TetrisMoveListener;
+import tetris.generic.Tetromino;
+import tetris.util.MyThread;
 
 /**
  *
@@ -56,7 +64,19 @@ public class Network {
     private final MyThread serverThread;
     private final MyThread readThread;
 
-    public Network() {
+    private final TetrisEngine remoteEngine;
+    private final TetrisEngine localEngine;
+
+    public Network(TetrisEngine local, TetrisEngine remote) {
+        this.localEngine = local;
+        this.remoteEngine = remote;
+
+        this.localEngine.addMoveListener(new TetrisMoveListener() {
+            @Override
+            public void sucessfulMove(MoveResult move) {
+                sendMove(move);
+            }
+        });
         this.serverThread = new MyThread(new Function<MyThread.ThreadControl, Void>(){
             @Override
             public Void apply(MyThread.ThreadControl control) {
@@ -97,7 +117,6 @@ public class Network {
     public boolean connect(InetAddress addr, int port) {
         try {
             System.out.println(addr);
-            System.out.println(port);
             Socket clientSocket = new Socket(addr, port);
             return this.processClientSideSocket(clientSocket);
         } catch (IOException ex) {
@@ -116,6 +135,10 @@ public class Network {
                 // RECOMECA JOGO
                 //estado_completo_inimigo = newInput.readLine();
                 //newOutput.println(meu_estado_completo);
+                
+                remoteEngine.unserializeCompleteState(newInput.readLine());
+                newOutput.println(localEngine.serializeCompleteState());
+                newOutput.flush();
 
                 startReadThread(clientSocket, newOutput, newInput);
             } else {
@@ -179,8 +202,15 @@ public class Network {
                 closeSocket(serverSideSocket);
             } else {
                 // RECOMECA JOGO
-                //newOutput.println(meu_estado_completo);
-                //estado_completo_inimigo = newInput.readLine();
+                try {
+                    newOutput.println(localEngine.serializeCompleteState());
+                    newOutput.flush();
+                    remoteEngine.unserializeCompleteState(newInput.readLine());
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, null, ex);
+                    closeSocket(serverSideSocket);
+                    return;
+                }
 
                 this.connected = true;
                 this.startReadThread(socket, newOutput, newInput);
@@ -224,19 +254,29 @@ public class Network {
         }
     }
 
-    public void sendMove(Move move) {
+    public void sendMove(MoveResult move) {
         Objects.requireNonNull(move);
 
         if (!this.connected) return;
-
-        this.out.println(delimitadorJogo + move.ordinal());
+        StringBuilder builder = new StringBuilder();
+        builder.append(delimitadorJogo);
+        builder.append(move.move.ordinal());
+        if (move.nextblock != null) {
+            builder.append(' ').append(move.nextblock.type.ordinal());
+            builder.append(' ').append(move.nextblock.x);
+            builder.append(' ').append(move.nextblock.y);
+            builder.append(' ').append(move.nextblock.rot);
+        }
+        this.out.println(builder.toString());
         this.out.flush();
     }
 
     private void readLoop(MyThread.ThreadControl control) {
         while (control.check()) {
             try {
+                if (in == null) break;
                 String linha = in.readLine();
+                if (linha == null || linha.isEmpty()) break;
                 if (linha.startsWith(delimitadorChat)) {
                     processLinhaChat(linha.substring(delimitadorChat.length()));
                 } else if (linha.startsWith(delimitadorJogo)) {
@@ -266,13 +306,12 @@ public class Network {
             if (this.socket != null) {
                 this.socket.close();
             }
-        } catch (IOException ex1) {
-            logger.log(Level.SEVERE, "erro ao fechar socket", ex1);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "erro ao fechar socket", ex);
         } finally {
             this.connected = false;
             this.in = null;
             this.out = null;
-
             this.socket = null;
         }
     }
@@ -280,8 +319,8 @@ public class Network {
     private static void closeSocket(Socket socket) {
         try {
             socket.close();
-        } catch (IOException ex1) {
-            logger.log(Level.SEVERE, "erro ao fechar socket", ex1);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "erro ao fechar socket", ex);
         }
     }
     
@@ -308,7 +347,31 @@ public class Network {
     }
 
     private void processLinhaJogo(String linha) {
-        Move move = Move.values()[Integer.parseInt(linha, 10)];
+        Pattern REGEX = Pattern.compile("^(\\d+)( (\\d+) (\\d+) (\\d+) (\\d+))?$");
+        Matcher matcher = REGEX.matcher(linha);
+        if (!matcher.find()) {
+            logger.log(Level.WARNING, "erro ao parsear string {0}", linha);
+            return;
+        }
+        Move move = Move.values()[Integer.parseInt(matcher.group(1), 10)];
+        if (matcher.group(2) != null && !matcher.group(2).isEmpty()) {
+//            builder.append(' ').append(move.nextblock.type.ordinal());
+//            builder.append(' ').append(move.nextblock.x);
+//            builder.append(' ').append(move.nextblock.y);
+//            builder.append(' ').append(move.nextblock.rot);
+
+            Tetromino.Type type = Tetromino.Type.values()[Integer.parseInt(matcher.group(3))];
+            int x = Integer.parseInt(matcher.group(4));
+            int y = Integer.parseInt(matcher.group(5));
+            int rot = Integer.parseInt(matcher.group(6));
+            Tetromino nextblock = new Tetromino(type, rot);
+            nextblock.x = x;
+            nextblock.y = y;
+            this.remoteEngine.tryMove(move, nextblock);
+        } else {
+            this.remoteEngine.tryMove(move);
+        }
+        
     }
 
     private void processLinhaChat(String linha) {
@@ -319,4 +382,25 @@ public class Network {
         return this.port;
     }
 
+    public static URI parseHostPort(String input) {
+        URI uri;
+        try {
+            // WORKAROUND: add any scheme to make the resulting URI valid.
+            uri = new URI("my://" + input); // may throw URISyntaxException
+            String host = uri.getHost();
+            int port = uri.getPort();
+
+            if (host == null || port == -1) {
+              throw new URISyntaxException(uri.toString(),
+                "URI must have host and port parts");
+            }
+
+            // here, additional checks can be performed, such as
+            // presence of path, query, fragment, ...
+
+        } catch (URISyntaxException ex) {
+            return null;
+        }
+        return uri;
+    }
 }

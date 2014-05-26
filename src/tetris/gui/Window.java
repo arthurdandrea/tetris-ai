@@ -29,8 +29,12 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.InetAddress;
+import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -40,6 +44,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -50,6 +55,7 @@ import tetris.ai.TetrisAI;
 import tetris.generic.Score;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngine.GameState;
+import tetris.net.Network;
 import tetris.util.functional.PropertyListeners;
 
 /**
@@ -80,6 +86,7 @@ public class Window extends JFrame {
     private JLabel aiVelocityLabel;
     private JLabel aiVelocityValue;
     private JPanel pageContentPanel;
+    private Network network;
 
     public Window() {
         initializeTetris();
@@ -95,6 +102,9 @@ public class Window extends JFrame {
         
         this.gameRight = new GamePanel();
         this.gameLeft = new GamePanel();
+        this.network = new Network(this.gameRight.engine, this.gameLeft.engine);
+        this.network.start();
+        System.out.println(this.network.getPort());
         
         this.gameRight.engine.addPropertyChangeListener("state", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
@@ -272,6 +282,17 @@ public class Window extends JFrame {
                             setNextAIVelocity();
                             gameRight.aiExecutor.start();
                         }
+                    }
+                    break;
+                case KeyEvent.VK_C:
+                    String address = JOptionPane.showInputDialog(Window.this, "Digite o ip e a porta do outro jogador");
+                    URI uri = Network.parseHostPort(address);
+                    gameLeft.aiExecutor.stop();
+                    try {
+                        network.connect(InetAddress.getByName(uri.getHost()), uri.getPort());
+                    } catch (UnknownHostException ex) {
+                        logger.log(Level.SEVERE, null, ex);
+                        gameLeft.aiExecutor.start();
                     }
                     break;
                 case KeyEvent.VK_V:

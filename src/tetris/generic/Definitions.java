@@ -236,6 +236,25 @@ public class Definitions {
         return this.possibleFits[type.ordinal()];
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Definitions) {
+            Definitions other = (Definitions) obj;
+            return this.width == other.width && this.height == other.height;
+        } else {
+            return false;
+        }
+
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + this.height;
+        hash = 67 * hash + this.width;
+        return hash;
+    }
+
     public static final class FreeSpaces {
         public final int left;
         public final int right;

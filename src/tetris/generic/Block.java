@@ -1,5 +1,7 @@
 package tetris.generic;
 
+import java.util.Objects;
+
 
 /*
  * More concrete representation of a block.
@@ -131,5 +133,23 @@ public final class Block implements Cloneable {
      */
     public void setType(Tetromino.Type type) {
         this.type = type;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Block) {
+            Block other = (Block) obj;
+            return this.state == other.state && this.type == other.type;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 47 * hash + this.state;
+        hash = 47 * hash + Objects.hashCode(this.type);
+        return hash;
     }
 }

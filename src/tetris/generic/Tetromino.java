@@ -66,6 +66,24 @@ public final class Tetromino implements Cloneable {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Tetromino) {
+            Tetromino other = (Tetromino) obj;
+            if (this.type != other.type || this.rot != other.rot || this.x != other.x || this.y != other.y) return false;
+            for (int i = 0; i < this.array.length; i++) {
+                for (int j = 0; j < this.array[i].length; j++) {
+                    if (!this.array[i][j].equals(other.array[i][j])) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public Tetromino clone() {
         Tetromino ret = new Tetromino();
         ret.array = array.clone();
@@ -81,6 +99,19 @@ public final class Tetromino implements Cloneable {
         return String.format("Tetromino[type:%s,x=%d,y=%d,rot=%d]",
                              this.type, this.x, this.y, this.rot);
     }
+
+    public void reset(Type blockType, int rotation) {
+        Objects.requireNonNull(blockType);
+        byte[][][] blockdef = Definitions.blockdef[blockType.ordinal()];
+        if (rotation < 0 || rotation >= blockdef.length) {
+            throw new IndexOutOfBoundsException("rotation is out of bounds");
+        }
+
+        this.type = blockType;
+        this.rot = rotation;
+        this.array = Block.toBlock2D(blockdef[this.rot], this.type);
+    }
+
     public enum Type {
         Long, Box, L, J, T, S, Z;
         

@@ -81,7 +81,6 @@ public final class MyThread {
                 }
             } else if (this.status == Status.STOPED) {
             } else {
-                System.out.println(this.status);
                 throw new RuntimeException();
             }
         }

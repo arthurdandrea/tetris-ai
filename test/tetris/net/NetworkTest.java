@@ -19,8 +19,12 @@ package tetris.net;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import org.junit.Test;
 import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.Timeout;
+import tetris.generic.TetrisEngine;
 
 /**
  *
@@ -28,13 +32,17 @@ import static org.junit.Assert.*;
  * @author Natali Silva Honda
  */
 public class NetworkTest {
+    //@Rule
+    //public Timeout globalTimeout = new Timeout(3000); // 10 seconds max per method tested
 
     /**
      * Test of start and stop methods, of class Network.
      */
     @Test
     public void testStart() throws InterruptedException {
-        Network network = new Network();
+        TetrisEngine localEngine = new TetrisEngine();
+        TetrisEngine remoteEngine = new TetrisEngine();
+        Network network = new Network(localEngine, remoteEngine);
 
         try {
             network.start();
@@ -48,16 +56,30 @@ public class NetworkTest {
      */
     @Test
     public void testConnect() throws UnknownHostException {
-        Network serverNetwork = new Network();
-        Network clientNetwork = new Network();
+        TetrisEngine localEngine1 = new TetrisEngine();
+        TetrisEngine remoteEngine1 = new TetrisEngine();
+        TetrisEngine localEngine2 = new TetrisEngine();
+        TetrisEngine remoteEngine2 = new TetrisEngine();
+
+        localEngine1.startengine();
+        localEngine2.startengine();
+        remoteEngine1.startengine();
+        remoteEngine2.startengine();
+
+        Network localNetwork = new Network(localEngine1, remoteEngine1);
+        Network remoteNetwork = new Network(localEngine2, remoteEngine2);
 
         try {
-            serverNetwork.start();
-            clientNetwork.start();
-            clientNetwork.connect(InetAddress.getByName("localhost"), serverNetwork.getPort());
+            localNetwork.start();
+            remoteNetwork.start();
+            remoteNetwork.connect(InetAddress.getByName("localhost"), localNetwork.getPort());
+            localEngine2.keyslam();
+            localEngine2.keyslam();
+            localEngine1.keyslam();
+            localEngine1.keyslam();
         } finally {
-            serverNetwork.stop();
-            clientNetwork.stop();
+            localNetwork.stop();
+            remoteNetwork.stop();
         }
     }    
 
