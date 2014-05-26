@@ -138,7 +138,6 @@ public class Network {
                 //estado_completo_inimigo = newInput.readLine();
                 //newOutput.println(meu_estado_completo);
                 localEngine.reset();
-                remoteEngine.removeRandom();
                 remoteEngine.loadCompleteState(protocol.decodeCompleteState(newInput.readLine()));
                 newOutput.println(protocol.encodeCompleteState(localEngine.dumpCompleteState()));
                 newOutput.flush();
@@ -209,7 +208,6 @@ public class Network {
                     localEngine.reset();
                     newOutput.println(protocol.encodeCompleteState(localEngine.dumpCompleteState()));
                     newOutput.flush();
-                    remoteEngine.removeRandom();
                     remoteEngine.loadCompleteState(protocol.decodeCompleteState(newInput.readLine()));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, null, ex);
