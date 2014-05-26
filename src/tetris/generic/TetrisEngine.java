@@ -207,7 +207,7 @@ public final class TetrisEngine {
             assert this.fallEnded == false;
         }
 
-        private MoveResult(Move move, boolean successful, Tetromino nextblock) {
+        public MoveResult(Move move, boolean successful, Tetromino nextblock) {
             this.move = move;
             this.successful = successful;
             this.fallEnded = nextblock != null;
@@ -317,9 +317,8 @@ public final class TetrisEngine {
     public void startengine() {
         this.rwLock.writeLock().lock();
         try {
-            this.state = GameState.PLAYING;
-            this.step();
-            this.propertyChangeSupport.firePropertyChange("score", null, null);
+            
+            this.reset();
         } finally {
             this.rwLock.writeLock().unlock();
         }
@@ -328,14 +327,21 @@ public final class TetrisEngine {
     /**
      * Fully resets everything.
      */
-    private void reset() {
+    public void reset() {
+        this.rwLock.writeLock().lock();
+        try {
         this.reset(null, null, null);
+        } finally {
+            this.rwLock.writeLock().unlock();
+        }
     }
 
     private void reset(Tetromino activeblock, Tetromino nextblock, Block[][] blocks) {
-        this.activeblock = activeblock;
-        this.nextblock = nextblock;
-
+        this.activeblock = activeblock == null ? Tetromino.getRandom(rdm) : activeblock;
+        this.nextblock =   nextblock == null ? Tetromino.getRandom(rdm) : nextblock;
+        this.state = GameState.PLAYING;
+        this.score = new Score();
+        this.propertyChangeSupport.firePropertyChange("score", null, null);
         if (blocks == null) {
         for (int i = 0; i < this.defs.width; i++) {
             for (int j = 0; j < this.defs.height; j++) {
@@ -345,6 +351,7 @@ public final class TetrisEngine {
         } else {
             this.blocks = blocks;
         }
+        this.copy();
         this.propertyChangeSupport.firePropertyChange("blocks", null, null);
         this.propertyChangeSupport.firePropertyChange("nextblock", null, null); // FIXME
     }
@@ -614,87 +621,31 @@ public final class TetrisEngine {
             this.rwLock.writeLock().unlock();
         }
     }
-    public String serializeCompleteState() {
+    
+    public static class CompleteState {
+        public Block[][] blocks;
+        public Tetromino activeblock;
+        public Tetromino nextblock;
+        public Definitions definitions;
+    }
+    public CompleteState dumpCompleteState() {
         this.rwLock.readLock().lock();
         try {
-            StringBuilder builder = new StringBuilder();
-            for (int i = 0; i < blocks.length; i++) {
-                for (int j = 0; j < blocks[i].length; j++) {
-                    Block block = blocks[i][j];
-                    if (block.getState() != 0) {
-                        builder.append("blocks[").append(i)
-                                .append("][").append(j).append("]=")
-                                .append(block.getState()).append(',')
-                                .append(block.getType().ordinal())
-                                .append(' ');
-                    }
-                }
-            }
-            if (this.activeblock != null) {
-                builder.append("activeblock=")
-                        .append(this.activeblock.type.ordinal()).append(',')
-                        .append(this.activeblock.rot).append(',')
-                        .append(this.activeblock.x).append(',')
-                        .append(this.activeblock.y).append(' ');
-            }
-            if (this.nextblock != null) {
-                builder.append("nextblock=")
-                        .append(this.nextblock.type.ordinal()).append(',')
-                        .append(this.nextblock.rot).append(',')
-                        .append(this.nextblock.x).append(',')
-                        .append(this.nextblock.y).append(' ');
-            }
-            return builder.toString();
+            CompleteState state = new CompleteState();
+            state.definitions = this.defs;
+            state.blocks = this.blocks.clone();
+            state.activeblock = this.activeblock.clone();
+            state.nextblock = this.nextblock.clone();
+            return state;
         } finally {
             this.rwLock.readLock().unlock();
         }
     }
 
-    public void unserializeCompleteState(String serialized) {
-        Pattern blocksPattern = Pattern.compile("^blocks\\[(\\d+)\\]\\[(\\d+)\\]=(\\d+),(\\d+)$");
-        Pattern tetrominoPattern = Pattern.compile("^(active|next)block=(\\d+),(\\d+),(\\d+),(\\d+)$");
+    public void loadCompleteState(CompleteState state) {
         this.rwLock.writeLock().lock();
         try {
-            Tetromino newActiveBlock = null;
-            Tetromino newNextBlock = null;
-            Block[][] newBlocks = new Block[this.defs.width][this.defs.height];
-
-            for (int i = 0; i < this.defs.width; i++) {
-                for (int j = 0; j < this.defs.height; j++) {
-                    newBlocks[i][j] = new Block(Block.EMPTY, null);
-                }
-            }
-            for (String string : serialized.split(" ")) {
-                Matcher blocksMatcher = blocksPattern.matcher(string);
-                Matcher tetrominoMatcher = tetrominoPattern.matcher(string);
-                if (blocksMatcher.find()) {
-                    int i = Integer.parseInt(blocksMatcher.group(1));
-                    int j = Integer.parseInt(blocksMatcher.group(2));
-                    int state = Integer.parseInt(blocksMatcher.group(3));
-                    int type = Integer.parseInt(blocksMatcher.group(4));
-                    
-                    newBlocks[i][j].setState(state);
-                    newBlocks[i][j].setType(Tetromino.Type.values()[type]);
-                } else if (tetrominoMatcher.find()) {
-                    String activeOrNext = tetrominoMatcher.group(1);
-                    int type = Integer.parseInt(tetrominoMatcher.group(2));
-                    int rot = Integer.parseInt(tetrominoMatcher.group(3));
-                    int x = Integer.parseInt(tetrominoMatcher.group(4));
-                    int y = Integer.parseInt(tetrominoMatcher.group(5));
-
-                    if ("active".equals(activeOrNext)) {
-                        newActiveBlock = new Tetromino(Tetromino.Type.values()[type], rot);
-                        newActiveBlock.x = x;
-                        newActiveBlock.y = y;
-                    } else {
-                        newNextBlock = new Tetromino(Tetromino.Type.values()[type], rot);
-                        newNextBlock.x = x;
-                        newNextBlock.y = y;
-                    }
-                }
-            }
-            
-            this.reset(newActiveBlock, newNextBlock, newBlocks);
+            this.reset(state.activeblock, state.nextblock, state.blocks);
         } finally {
             this.rwLock.writeLock().unlock();
         }

@@ -66,8 +66,10 @@ public class Network {
 
     private final TetrisEngine remoteEngine;
     private final TetrisEngine localEngine;
+    private final Protocol protocol;
 
     public Network(TetrisEngine local, TetrisEngine remote) {
+        this.protocol = new Protocol();
         this.localEngine = local;
         this.remoteEngine = remote;
 
@@ -135,9 +137,10 @@ public class Network {
                 // RECOMECA JOGO
                 //estado_completo_inimigo = newInput.readLine();
                 //newOutput.println(meu_estado_completo);
-                
-                remoteEngine.unserializeCompleteState(newInput.readLine());
-                newOutput.println(localEngine.serializeCompleteState());
+                localEngine.reset();
+                remoteEngine.removeRandom();
+                remoteEngine.loadCompleteState(protocol.decodeCompleteState(newInput.readLine()));
+                newOutput.println(protocol.encodeCompleteState(localEngine.dumpCompleteState()));
                 newOutput.flush();
 
                 startReadThread(clientSocket, newOutput, newInput);
@@ -203,9 +206,11 @@ public class Network {
             } else {
                 // RECOMECA JOGO
                 try {
-                    newOutput.println(localEngine.serializeCompleteState());
+                    localEngine.reset();
+                    newOutput.println(protocol.encodeCompleteState(localEngine.dumpCompleteState()));
                     newOutput.flush();
-                    remoteEngine.unserializeCompleteState(newInput.readLine());
+                    remoteEngine.removeRandom();
+                    remoteEngine.loadCompleteState(protocol.decodeCompleteState(newInput.readLine()));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, null, ex);
                     closeSocket(serverSideSocket);
@@ -247,27 +252,19 @@ public class Network {
     public void sendChat(String string) {
         if (!this.connected) return;
 
-        String[] splitStrings = string.split("\n");
-        for (String parte : splitStrings) {
-            this.out.println(delimitadorChat + parte);
-            this.out.flush();
-        }
+        String encoded = this.protocol.encodeChat(string);
+        this.out.print(delimitadorChat);
+        this.out.println(encoded);
+        this.out.flush();
     }
 
-    public void sendMove(MoveResult move) {
-        Objects.requireNonNull(move);
-
+    public void sendMove(MoveResult moveResult) {
+        Objects.requireNonNull(moveResult);
         if (!this.connected) return;
-        StringBuilder builder = new StringBuilder();
-        builder.append(delimitadorJogo);
-        builder.append(move.move.ordinal());
-        if (move.nextblock != null) {
-            builder.append(' ').append(move.nextblock.type.ordinal());
-            builder.append(' ').append(move.nextblock.x);
-            builder.append(' ').append(move.nextblock.y);
-            builder.append(' ').append(move.nextblock.rot);
-        }
-        this.out.println(builder.toString());
+
+        String encoded = this.protocol.encodeMoveResult(moveResult);
+        this.out.print(delimitadorJogo);
+        this.out.println(encoded);
         this.out.flush();
     }
 
@@ -347,35 +344,15 @@ public class Network {
     }
 
     private void processLinhaJogo(String linha) {
-        Pattern REGEX = Pattern.compile("^(\\d+)( (\\d+) (\\d+) (\\d+) (\\d+))?$");
-        Matcher matcher = REGEX.matcher(linha);
-        if (!matcher.find()) {
-            logger.log(Level.WARNING, "erro ao parsear string {0}", linha);
-            return;
+        MoveResult moveResult = this.protocol.decodeMoveResult(linha);
+        if (moveResult != null) {
+            this.remoteEngine.tryMove(moveResult.move, moveResult.nextblock);
         }
-        Move move = Move.values()[Integer.parseInt(matcher.group(1), 10)];
-        if (matcher.group(2) != null && !matcher.group(2).isEmpty()) {
-//            builder.append(' ').append(move.nextblock.type.ordinal());
-//            builder.append(' ').append(move.nextblock.x);
-//            builder.append(' ').append(move.nextblock.y);
-//            builder.append(' ').append(move.nextblock.rot);
-
-            Tetromino.Type type = Tetromino.Type.values()[Integer.parseInt(matcher.group(3))];
-            int x = Integer.parseInt(matcher.group(4));
-            int y = Integer.parseInt(matcher.group(5));
-            int rot = Integer.parseInt(matcher.group(6));
-            Tetromino nextblock = new Tetromino(type, rot);
-            nextblock.x = x;
-            nextblock.y = y;
-            this.remoteEngine.tryMove(move, nextblock);
-        } else {
-            this.remoteEngine.tryMove(move);
-        }
-        
     }
 
     private void processLinhaChat(String linha) {
-        System.out.println("recebeu chat: " + linha);
+        String chat = this.protocol.decodeChat(linha);
+        System.out.println("recebeu chat: " + chat);
     }
 
     public int getPort() {

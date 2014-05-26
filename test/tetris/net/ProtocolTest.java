@@ -15,30 +15,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package tetris.generic;
+package tetris.net;
 
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
 import org.junit.Test;
+import static org.junit.Assert.*;
+import tetris.generic.TetrisEngine;
 
 /**
  *
  * @author Arthur D'Andréa Alemar
  */
-public class TetrisEngineTest {
-
+public class ProtocolTest {
     @Test
     public void testSerialization() {
+        Protocol protocol = new Protocol();
         TetrisEngine engine1 = new TetrisEngine();
         engine1.startengine();
         
         TetrisEngine engine2 = new TetrisEngine();
         engine2.startengine();
         
-        engine2.loadCompleteState(engine1.dumpCompleteState());
+        engine2.loadCompleteState(protocol.decodeCompleteState(protocol.encodeCompleteState(engine1.dumpCompleteState())));
         
         assertTrue(engine1.equals(engine2));
         assertTrue(engine2.equals(engine1));
     }
-    
 }
