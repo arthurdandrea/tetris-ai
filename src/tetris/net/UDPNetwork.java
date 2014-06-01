@@ -17,22 +17,16 @@
 
 package tetris.net;
 
-import com.google.common.base.Function;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.PrintStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.Charset;
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import tetris.generic.TetrisEngine;
-import tetris.generic.TetrisMoveListener;
 import static tetris.net.Network.HELLO;
 import static tetris.net.Network.delimitadorChat;
 import tetris.util.MyThread;

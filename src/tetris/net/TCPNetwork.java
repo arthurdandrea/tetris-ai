@@ -16,7 +16,6 @@
  */
 package tetris.net;
 
-import com.google.common.base.Function;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +35,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngine.MoveResult;
-import tetris.generic.TetrisMoveListener;
 import tetris.util.MyThread;
 
 /**

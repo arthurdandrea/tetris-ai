@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * This class calculates the block positions, rotations, moves across the board.

@@ -19,7 +19,6 @@ package tetris.gui;
 
 import java.awt.Graphics;
 import javax.swing.JComponent;
-import tetris.generic.Definitions;
 import tetris.generic.TetrisEngine;
 
 /**

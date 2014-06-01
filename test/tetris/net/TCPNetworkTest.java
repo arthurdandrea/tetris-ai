@@ -19,11 +19,7 @@ package tetris.net;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 import tetris.generic.TetrisEngine;
 
 /**

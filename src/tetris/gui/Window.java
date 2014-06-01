@@ -50,7 +50,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 import tetris.generic.TetrisEngine.GameState;
 import tetris.net.Network;
 import tetris.net.TCPNetwork;
-import tetris.net.UDPNetwork;
 import tetris.util.functional.PropertyListeners;
 
 /**

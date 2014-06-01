@@ -20,9 +20,9 @@ package tetris.util.functional;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.List;
+import static org.hamcrest.Matchers.contains;
+import static org.junit.Assert.assertThat;
 import org.junit.Test;
-import static org.junit.Assert.*;
-import static org.hamcrest.Matchers.*;
 import tetris.util.functional.CartesianProduct.Pair;
 /**
  *
