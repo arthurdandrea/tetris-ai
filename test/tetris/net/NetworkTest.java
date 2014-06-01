@@ -36,13 +36,13 @@ public class NetworkTest {
     //public Timeout globalTimeout = new Timeout(3000); // 10 seconds max per method tested
 
     /**
-     * Test of start and stop methods, of class Network.
+     * Test of start and stop methods, of class TCPNetwork.
      */
     @Test
     public void testStart() throws InterruptedException {
         TetrisEngine localEngine = new TetrisEngine();
         TetrisEngine remoteEngine = new TetrisEngine();
-        Network network = new Network(localEngine, remoteEngine);
+        TCPNetwork network = new TCPNetwork(localEngine, remoteEngine);
 
         try {
             network.start();
@@ -52,7 +52,7 @@ public class NetworkTest {
     }    
     
     /**
-     * Test of start and stop methods, of class Network.
+     * Test of start and stop methods, of class TCPNetwork.
      */
     @Test
     public void testConnect() throws UnknownHostException {
@@ -66,8 +66,8 @@ public class NetworkTest {
         remoteEngine1.startengine();
         remoteEngine2.startengine();
 
-        Network localNetwork = new Network(localEngine1, remoteEngine1);
-        Network remoteNetwork = new Network(localEngine2, remoteEngine2);
+        TCPNetwork localNetwork = new TCPNetwork(localEngine1, remoteEngine1);
+        TCPNetwork remoteNetwork = new TCPNetwork(localEngine2, remoteEngine2);
 
         try {
             localNetwork.start();

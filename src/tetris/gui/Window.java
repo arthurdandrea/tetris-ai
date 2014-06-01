@@ -49,6 +49,8 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import tetris.generic.TetrisEngine.GameState;
 import tetris.net.Network;
+import tetris.net.TCPNetwork;
+import tetris.net.UDPNetwork;
 import tetris.util.functional.PropertyListeners;
 
 /**
@@ -96,7 +98,7 @@ public class Window extends JFrame {
         
         this.gameRight = new GamePanel();
         this.gameLeft = new GamePanel();
-        this.network = new Network(this.gameRight.engine, this.gameLeft.engine);
+        this.network = new TCPNetwork(this.gameRight.engine, this.gameLeft.engine);
         this.network.start();
         
         this.gameRight.engine.addPropertyChangeListener("state", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
@@ -292,7 +294,7 @@ public class Window extends JFrame {
                     if (address == null || address.isEmpty()) {
                         break;
                     }
-                    URI uri = Network.parseHostPort(address);
+                    URI uri = TCPNetwork.parseHostPort(address);
                     gameLeft.aiExecutor.stop();
                     try {
                         network.connect(InetAddress.getByName(uri.getHost()), uri.getPort());

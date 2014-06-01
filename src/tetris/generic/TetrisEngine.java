@@ -64,7 +64,7 @@ public final class TetrisEngine {
      * anything!
      */
     public TetrisEngine() {
-        this(new Definitions(6, 20));
+        this(Definitions.create(6, 20));
     }
 
     /**
@@ -74,7 +74,7 @@ public final class TetrisEngine {
      * @param height the height of the board
      */
     public TetrisEngine(int width, int height) {
-        this(new Definitions(width, height));
+        this(Definitions.create(width, height));
     }
     
     /**

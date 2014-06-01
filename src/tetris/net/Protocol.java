@@ -38,6 +38,13 @@ public final class Protocol {
     private static final Pattern blocksPattern = Pattern.compile("^blocks\\[(\\d+)\\]\\[(\\d+)\\]=(\\d+),(\\d+)$");
     private static final Pattern tetrominoPattern = Pattern.compile("^(active|next)block=(\\d+),(\\d+),(\\d+),(\\d+)$");
 
+    private static final Protocol instance = new Protocol();
+    public static Protocol create() {
+        return instance;
+    }
+
+    private Protocol() {
+    }
 
     public String encodeMoveResult(MoveResult moveResult) {
         StringBuilder builder = new StringBuilder();

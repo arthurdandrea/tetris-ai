@@ -212,6 +212,11 @@ public class Definitions {
     public final int width;
     private final BlockPosition[][] possibleFits;
 
+    
+    public static Definitions create(int width, int height) {
+        return new Definitions(width, height);
+    }
+
     public Definitions(int width, int height) {
         assert width > 0;
         assert height > 0;

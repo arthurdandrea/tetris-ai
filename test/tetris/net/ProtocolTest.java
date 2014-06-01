@@ -28,7 +28,7 @@ import tetris.generic.TetrisEngine;
 public class ProtocolTest {
     @Test
     public void testSerialization() {
-        Protocol protocol = new Protocol();
+        Protocol protocol = Protocol.create();
         TetrisEngine engine1 = new TetrisEngine();
         engine1.startengine();
         
