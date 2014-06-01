@@ -31,7 +31,7 @@ import tetris.generic.TetrisEngine;
  * @author Arthur D'Andréa Alemar
  * @author Natali Silva Honda
  */
-public class NetworkTest {
+public class TCPNetworkTest {
     //@Rule
     //public Timeout globalTimeout = new Timeout(3000); // 10 seconds max per method tested
 
