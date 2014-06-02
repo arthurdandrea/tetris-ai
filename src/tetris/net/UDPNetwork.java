@@ -22,6 +22,7 @@ import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
@@ -243,5 +244,10 @@ public class UDPNetwork extends Network {
     private static DatagramPacket packetForString(String string, DatagramSocket socket) {
         byte[] buffer = string.getBytes(Charset.forName("ascii"));
         return new DatagramPacket(buffer, buffer.length);
+    }
+
+    @Override
+    public SocketAddress getRemoteAddress() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

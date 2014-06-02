@@ -19,6 +19,9 @@ package tetris.net;
 
 import com.google.common.base.Function;
 import java.net.InetAddress;
+import java.net.SocketAddress;
+import java.util.ArrayList;
+import java.util.List;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisMoveListener;
 import tetris.util.MyThread;
@@ -38,12 +41,15 @@ public abstract class Network {
     protected final TetrisEngine localEngine;
     protected final MyThread serverThread;
     protected final MyThread readThread;
+    private final List<MessageReciever> messageRecievers;
+    private final ArrayList<ConnectionListener> connectionListeners;
     
     public Network(TetrisEngine local, TetrisEngine remote) {
         this.protocol = Protocol.create();
         this.localEngine = local;
         this.remoteEngine = remote;
-
+        this.messageRecievers = new ArrayList<>();
+        this.connectionListeners = new ArrayList<>();
         this.localEngine.addMoveListener(new TetrisMoveListener() {
             @Override
             public void sucessfulMove(TetrisEngine.MoveResult move) {
@@ -66,6 +72,25 @@ public abstract class Network {
         }, "Network Read Thread");
     }
 
+    public synchronized void addMessageReciever(MessageReciever reciever) {
+        this.messageRecievers.add(reciever);
+    }
+
+    public void addConnectionListener(ConnectionListener connectionListener) {
+        this.connectionListeners.add(connectionListener);
+    }
+
+    protected void onConnected() {
+        for (ConnectionListener connectionListener : this.connectionListeners) {
+            connectionListener.onConnected();
+        }
+    }
+    
+    protected void onDisconnected() {
+        for (ConnectionListener connectionListener : this.connectionListeners) {
+            connectionListener.onDisconnected();
+        }        
+    }
     protected void processLinha(String linha) {
         if (linha == null || linha.isEmpty()) return;
         if (linha.startsWith(delimitadorChat)) {
@@ -84,9 +109,12 @@ public abstract class Network {
         }
     }
 
-    protected void processLinhaChat(String linha) {
-        String chat = this.protocol.decodeChat(linha);
-        System.out.println("recebeu chat: " + chat);
+    protected synchronized void processLinhaChat(String linha) {
+        String message = this.protocol.decodeChat(linha);
+        for (MessageReciever messageReciever : messageRecievers) {
+            messageReciever.messageRecieved(message);
+        }
+        System.out.println("recebeu chat: " + message);
     }
 
     public abstract boolean connect(InetAddress addr, int port);
@@ -96,6 +124,7 @@ public abstract class Network {
     public abstract void sendMove(TetrisEngine.MoveResult moveResult);
     public abstract void start();
     public abstract void stop();
+    public abstract SocketAddress getRemoteAddress();
 
     protected abstract void readLoop(MyThread.ThreadControl control);
     protected abstract void serverLoop(MyThread.ThreadControl control);

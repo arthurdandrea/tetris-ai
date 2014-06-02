@@ -21,13 +21,18 @@ import com.google.common.collect.Iterables;
 import java.awt.Dimension;
 import java.awt.Event;
 import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.InetAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Iterator;
@@ -48,6 +53,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import tetris.generic.TetrisEngine.GameState;
+import tetris.net.ConnectionListener;
 import tetris.net.Network;
 import tetris.net.TCPNetwork;
 import tetris.util.functional.PropertyListeners;
@@ -81,7 +87,8 @@ public class Window extends JFrame {
     private JLabel aiVelocityValue;
     private JPanel pageContentPanel;
     private Network network;
-    private JLabel networkLabel;
+    private NetworkInfoPanel networkLabel;
+    private ChatPanel chatPanel;
 
     public Window() {
         initializeTetris();
@@ -93,12 +100,30 @@ public class Window extends JFrame {
         //this.gameLeft.aiExecutor.start();
     }
     
-    private void initializeTetris() {        
-        
+    private void initializeTetris() {
         this.gameRight = new GamePanel();
         this.gameLeft = new GamePanel();
         this.network = new TCPNetwork(this.gameRight.engine, this.gameLeft.engine);
         this.network.start();
+        this.chatPanel = new ChatPanel(this.network);
+        this.network.addConnectionListener(new ConnectionListener() {
+
+            @Override
+            public void onConnected() {
+                chatPanel.clear();
+                chatPanel.setVisible(true);
+                pack();
+            }
+
+            @Override
+            public void onDisconnected() {
+                chatPanel.clear();
+                chatPanel.setVisible(false);
+                pack();
+            }
+            
+        });
+        
         
         this.gameRight.engine.addPropertyChangeListener("state", PropertyListeners.alwaysInSwing(new PropertyChangeListener() {
             @Override
@@ -153,6 +178,10 @@ public class Window extends JFrame {
     }
 
     private void initializeComponents() {
+        this.gameLeft.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
+        this.chatPanel.setVisible(false);
+        this.gameLeft.sidebarPane.add(this.chatPanel);
+        
         this.gameRight.sidebarPane.add(Box.createRigidArea(new Dimension(0, 10)));
         {
             JLabel label = new JLabel("Controls");
@@ -204,7 +233,17 @@ public class Window extends JFrame {
         this.mainLabel = new JLabel("Tetris");
         this.mainLabel.setFont(this.mainLabel.getFont().deriveFont(this.mainLabel.getFont().getSize2D() * 2.0f));
 
-        this.addKeyListener(new KeyAdapterImpl());
+        this.gameRight.board.setFocusable(true);
+        MouseAdapter mouseAdapter = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                gameRight.board.requestFocusInWindow();
+            }
+        };
+        this.gameRight.board.addMouseListener(mouseAdapter);
+        this.gameRight.sidebarPane.addMouseListener(mouseAdapter);
+        this.gameRight.board.requestFocusInWindow();
+        this.gameRight.board.addKeyListener(new KeyAdapterImpl());
 
         this.lineContentPanel = new JPanel();
         this.lineContentPanel.setLayout(new BoxLayout(this.lineContentPanel, BoxLayout.LINE_AXIS));
@@ -216,12 +255,7 @@ public class Window extends JFrame {
         this.lineContentPanel.add(Box.createRigidArea(new Dimension(10, 0)));
         this.lineContentPanel.add(this.gameRight.sidebarPane);
 
-        this.networkLabel = new JLabel();
-        try {
-            this.networkLabel.setText(InetAddress.getLocalHost().getHostAddress() + ":" + Integer.toString(this.network.getPort()));
-        } catch (UnknownHostException ex) {
-            Logger.getLogger(Window.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        this.networkLabel = new NetworkInfoPanel(network);
         this.pageContentPanel = new JPanel();
         this.pageContentPanel.setLayout(new BoxLayout(this.pageContentPanel, BoxLayout.PAGE_AXIS));
         this.pageContentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -229,9 +263,7 @@ public class Window extends JFrame {
         this.pageContentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         this.pageContentPanel.add(this.lineContentPanel);
         this.pageContentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
-        this.pageContentPanel.add(createCentralizedPanel(this.networkLabel));
-        
-        
+        this.pageContentPanel.add(this.networkLabel);
         this.add(this.pageContentPanel);
 
         this.setTitle("Tetris");
@@ -309,6 +341,9 @@ public class Window extends JFrame {
                     break;
                 case KeyEvent.VK_P:
                     gameRight.engine.tooglePause();
+                    break;
+                case KeyEvent.VK_M:
+                    chatPanel.setFocusToTextArea();
                     break;
                 case KeyEvent.VK_LEFT:
                     if (gameRight.engine.getState() == GameState.PLAYING && !gameRight.aiExecutor.isRunning()) {

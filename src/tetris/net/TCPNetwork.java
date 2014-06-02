@@ -27,6 +27,7 @@ import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -51,6 +52,7 @@ public class TCPNetwork extends Network {
     private PrintStream out;
     private BufferedReader in;
     private ServerSocket serverSocket;
+    private SocketAddress remoteAddress;
 
     public TCPNetwork(TetrisEngine local, TetrisEngine remote) {
         super(local, remote);
@@ -81,7 +83,6 @@ public class TCPNetwork extends Network {
     @Override
     public boolean connect(InetAddress addr, int port) {
         try {
-            System.out.println(addr);
             Socket clientSocket = new Socket(addr, port);
             return this.processClientSideSocket(clientSocket);
         } catch (IOException ex) {
@@ -132,10 +133,12 @@ public class TCPNetwork extends Network {
 
     private void startReadThread(Socket clientSocket, PrintStream clientOut, BufferedReader clientIn) {
         this.socket = clientSocket;
+        this.remoteAddress = this.socket.getRemoteSocketAddress();
         this.out = clientOut;
         this.in = clientIn;
         this.connected = true;
         this.readThread.startOrResume();
+        this.onConnected();
     }
 
     @Override
@@ -179,7 +182,7 @@ public class TCPNetwork extends Network {
                 }
 
                 this.connected = true;
-                this.startReadThread(socket, newOutput, newInput);
+                this.startReadThread(serverSideSocket, newOutput, newInput);
             }
         }
     }
@@ -207,8 +210,17 @@ public class TCPNetwork extends Network {
     }
 
     @Override
-    public boolean isConnected() {
+    public synchronized boolean isConnected() {
         return this.connected;
+    }
+
+    @Override
+    public synchronized SocketAddress getRemoteAddress() {
+        if (this.connected) {
+            return this.remoteAddress;
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -269,6 +281,8 @@ public class TCPNetwork extends Network {
             this.in = null;
             this.out = null;
             this.socket = null;
+            this.remoteAddress = null;
+            this.onDisconnected();
         }
     }
 
