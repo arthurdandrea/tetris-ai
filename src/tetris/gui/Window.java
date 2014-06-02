@@ -43,9 +43,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
@@ -71,11 +68,6 @@ public class Window extends JFrame {
     private GamePanel gameRight;
     private GamePanel gameLeft;
     
-    private JMenuBar menuBar;
-    private JMenu jogoMenu;
-    private JMenuItem pauseItem;
-    private JMenuItem restartItem;
-    
     private JPanel lineContentPanel;
     private ControlsPanel controlsPanel;
     
@@ -91,9 +83,8 @@ public class Window extends JFrame {
     private ChatPanel chatPanel;
 
     public Window() {
-        initializeTetris();
-        initializeMenu();
-        initializeComponents();
+        this.initializeTetris();
+        this.initializeComponents();
         this.gameRight.engine.startengine();
         this.gameLeft.engine.startengine();
         this.pack();
@@ -145,36 +136,6 @@ public class Window extends JFrame {
                 }
             }
         }));
-    }
-
-    private void initializeMenu() {
-        boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
-        
-        this.menuBar = new JMenuBar();
-	this.jogoMenu = new JMenu("Jogo");
-	this.restartItem = new JMenuItem("Reiniciar");
-        this.restartItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, isMac ? Event.META_MASK : Event.CTRL_MASK));
-        this.restartItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                //boardPane.start();
-            }
-        });
-        this.pauseItem = new JMenuItem("Pausar");
-        this.pauseItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-//                if (timer.isRunning()) {
-//                    timer.stop();
-//                } else {
-//                    timer.start();
-//                }
-            }
-        });
-	this.jogoMenu.add(this.restartItem);
-        this.jogoMenu.add(this.pauseItem);
-	this.menuBar.add(this.jogoMenu);
-	this.setJMenuBar(this.menuBar);
     }
 
     private void initializeComponents() {
