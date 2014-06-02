@@ -36,6 +36,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import tetris.generic.TetrisEngine;
 import tetris.generic.TetrisEngine.MoveResult;
+import tetris.net.Network.ConnectionState;
 import tetris.util.MyThread;
 
 /**
@@ -48,7 +49,6 @@ public class TCPNetwork extends Network {
 
     private int port;
     private Socket socket;
-    private boolean connected;
     private PrintStream out;
     private BufferedReader in;
     private ServerSocket serverSocket;
@@ -82,10 +82,15 @@ public class TCPNetwork extends Network {
 
     @Override
     public boolean connect(InetAddress addr, int port) {
+        if (this.getConnectionState() != ConnectionState.DISCONNECTED) {
+            return false;
+        }
         try {
+            this.onConnecting();
             Socket clientSocket = new Socket(addr, port);
             return this.processClientSideSocket(clientSocket);
         } catch (IOException ex) {
+            this.onConnectionError("Erro: erro desconhecido ao conectar");
             logger.log(Level.SEVERE, "erro ao conectar", ex);
             return false;
         }
@@ -96,28 +101,29 @@ public class TCPNetwork extends Network {
         PrintStream newOutput = getOutputStrem(clientSocket);
         if (newInput == null || newOutput == null) return false;
         newOutput.println(HELLO);
+        String error = null;
         try {
             if (readHelloMessage(newInput)) {
-                // RECOMECA JOGO
-                //estado_completo_inimigo = newInput.readLine();
-                //newOutput.println(meu_estado_completo);
-                localEngine.reset();
-                remoteEngine.loadCompleteState(protocol.decodeCompleteState(newInput.readLine()));
-                newOutput.println(protocol.encodeCompleteState(localEngine.dumpCompleteState()));
-                newOutput.flush();
+                String line = newInput.readLine();
+                if (!line.equals(UNAVAILABLE)) {
+                    localEngine.reset();
+                    remoteEngine.loadCompleteState(protocol.decodeCompleteState(line));
+                    newOutput.println(protocol.encodeCompleteState(localEngine.dumpCompleteState()));
+                    newOutput.flush();
 
-                startReadThread(clientSocket, newOutput, newInput);
+                    startReadThread(clientSocket, newOutput, newInput);
+                    return true;
+                } else {
+                    error = "Erro: outro usuário já está jogando";
+                }
             } else {
-                clientSocket.close();
-                return false;
+                error = "Erro: outro usuário não parece responder de acordo";
             }
         } catch (IOException e) {
-            closeSocket(clientSocket);
-            this.connected = false;
-            return false;
         }
-        this.connected = true;
-        return true;
+        closeSocket(clientSocket);
+        this.onConnectionError(error);
+        return false;
     }
 
     private static boolean readHelloMessage(BufferedReader newInput) {
@@ -136,9 +142,8 @@ public class TCPNetwork extends Network {
         this.remoteAddress = this.socket.getRemoteSocketAddress();
         this.out = clientOut;
         this.in = clientIn;
-        this.connected = true;
-        this.readThread.startOrResume();
         this.onConnected();
+        this.readThread.startOrResume();
     }
 
     @Override
@@ -164,11 +169,13 @@ public class TCPNetwork extends Network {
         if (readHelloMessage(newInput)) {
             newOutput.println(HELLO);
 
-            if (this.connected) {
+            if (true) {
                 newOutput.println(UNAVAILABLE);
                 newOutput.flush();
                 closeSocket(serverSideSocket);
             } else {
+                this.remoteAddress = serverSideSocket.getRemoteSocketAddress();
+                this.onConnecting();
                 // RECOMECA JOGO
                 try {
                     localEngine.reset();
@@ -177,11 +184,11 @@ public class TCPNetwork extends Network {
                     remoteEngine.loadCompleteState(protocol.decodeCompleteState(newInput.readLine()));
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, null, ex);
+                    this.onConnectionError("Erro: erro desconhecido ao receber conexão");
                     closeSocket(serverSideSocket);
                     return;
                 }
 
-                this.connected = true;
                 this.startReadThread(serverSideSocket, newOutput, newInput);
             }
         }
@@ -210,22 +217,17 @@ public class TCPNetwork extends Network {
     }
 
     @Override
-    public synchronized boolean isConnected() {
-        return this.connected;
-    }
-
-    @Override
     public synchronized SocketAddress getRemoteAddress() {
-        if (this.connected) {
-            return this.remoteAddress;
-        } else {
+        if (this.getConnectionState() == ConnectionState.DISCONNECTED) {
             return null;
+        } else {
+            return this.remoteAddress;
         }
     }
 
     @Override
     public void sendChat(String string) {
-        if (!this.connected) return;
+        if (this.getConnectionState() != ConnectionState.CONNECTED) return;
 
         String encoded = this.protocol.encodeChat(string);
         this.out.print(delimitadorChat);
@@ -236,7 +238,7 @@ public class TCPNetwork extends Network {
     @Override
     public void sendMove(MoveResult moveResult) {
         Objects.requireNonNull(moveResult);
-        if (!this.connected) return;
+        if (this.getConnectionState() != ConnectionState.CONNECTED) return;
 
         String encoded = this.protocol.encodeMoveResult(moveResult);
         this.out.print(delimitadorJogo);
@@ -277,7 +279,7 @@ public class TCPNetwork extends Network {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "erro ao fechar socket", ex);
         } finally {
-            this.connected = false;
+            this.onDisconnected();
             this.in = null;
             this.out = null;
             this.socket = null;

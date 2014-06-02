@@ -100,11 +100,6 @@ public class UDPNetwork extends Network {
     }
 
     @Override
-    public boolean isConnected() {
-        return this.connected;
-    }
-
-    @Override
     public void sendChat(String string) {
         if (!this.connected) return;
         String encoded = delimitadorChat + this.protocol.encodeChat(string);

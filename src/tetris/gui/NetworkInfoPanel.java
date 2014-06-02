@@ -22,6 +22,8 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
@@ -31,8 +33,8 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import tetris.net.ConnectionListener;
 import tetris.net.Network;
+import tetris.net.Network.ConnectionState;
 
 /**
  *
@@ -61,15 +63,10 @@ public class NetworkInfoPanel extends JPanel {
         });
 
         this.network = network;
-        this.network.addConnectionListener(new ConnectionListener() {
+        this.network.addPropertyChangeListener("connectionState", new PropertyChangeListener() {
             @Override
-            public void onConnected() {
-                updateDisplay();
-            }
-
-            @Override
-            public void onDisconnected() {
-                updateDisplay();
+            public void propertyChange(PropertyChangeEvent evt) {
+                updateDisplay((ConnectionState) evt.getNewValue());
             }
         });
         
@@ -79,22 +76,47 @@ public class NetworkInfoPanel extends JPanel {
         this.add(Box.createHorizontalGlue());
         this.updateDisplay();
     }
-
+    
+    
     private void updateDisplay() {
-        SocketAddress remoteAddress = this.network.getRemoteAddress();
-        if (remoteAddress != null) {
-            this.label.setText("Você está conectado a " + remoteAddress);
-            this.ipPort = null;
-        } else {
-            String hostAddress = null;
-            try {
-                hostAddress = InetAddress.getLocalHost().getHostAddress();
-            } catch (UnknownHostException ex) {
-                logger.log(Level.SEVERE, null, ex);
-            }
-            this.ipPort = hostAddress + ":" + Integer.toString(this.network.getPort());
-            this.label.setText("Seu IP e porta para conexão: " + ipPort);
-        }
-
+        this.updateDisplay(this.network.getConnectionState());
     } 
+
+    private void updateDisplay(ConnectionState connectionState) {
+        SocketAddress remoteAddress = this.network.getRemoteAddress();
+        String text;
+        switch (connectionState) {
+            case CONNECTED:
+                text = "Você está conectado a " + remoteAddress;
+                this.ipPort = null;
+                break;
+            case CONNECTING:
+                text = "Se conectando com " + remoteAddress;
+                this.ipPort = null;
+                break;
+            case DISCONNECTED:
+                String hostAddress = null;
+                try {
+                    hostAddress = InetAddress.getLocalHost().getHostAddress();
+                } catch (UnknownHostException ex) {
+                    logger.log(Level.SEVERE, null, ex);
+                }
+                if (hostAddress == null) {
+                    this.ipPort = Integer.toString(this.network.getPort());
+                    text = "Sua porta para conexão: ";
+                } else {
+                    this.ipPort = hostAddress + ":" + Integer.toString(this.network.getPort());
+                    text = "Seu IP e porta para conexão: ";
+                }
+                text += this.ipPort;
+                break;
+            default:
+                return;
+        }
+        String connectionError = this.network.getConnectionError();
+        if (connectionError != null && !connectionError.isEmpty()) {
+            text += " (" + connectionError + ")";
+        }
+        this.label.setText(text);
+    }
 }

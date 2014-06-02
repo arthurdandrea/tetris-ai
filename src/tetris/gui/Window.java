@@ -19,12 +19,7 @@ package tetris.gui;
 
 import com.google.common.collect.Iterables;
 import java.awt.Dimension;
-import java.awt.Event;
 import java.awt.Font;
-import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -32,7 +27,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.InetAddress;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Iterator;
@@ -45,13 +39,12 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import tetris.generic.TetrisEngine.GameState;
-import tetris.net.ConnectionListener;
 import tetris.net.Network;
+import tetris.net.Network.ConnectionState;
 import tetris.net.TCPNetwork;
 import tetris.util.functional.PropertyListeners;
 
@@ -67,7 +60,7 @@ public class Window extends JFrame {
 
     private GamePanel gameRight;
     private GamePanel gameLeft;
-    
+        
     private JPanel lineContentPanel;
     private ControlsPanel controlsPanel;
     
@@ -97,22 +90,20 @@ public class Window extends JFrame {
         this.network = new TCPNetwork(this.gameRight.engine, this.gameLeft.engine);
         this.network.start();
         this.chatPanel = new ChatPanel(this.network);
-        this.network.addConnectionListener(new ConnectionListener() {
-
+        this.network.addPropertyChangeListener("connectionState", new PropertyChangeListener() {
             @Override
-            public void onConnected() {
-                chatPanel.clear();
-                chatPanel.setVisible(true);
-                pack();
+            public void propertyChange(PropertyChangeEvent evt) {
+                ConnectionState state = (ConnectionState) evt.getNewValue();
+                if (state == ConnectionState.CONNECTED) {
+                    chatPanel.clear();
+                    chatPanel.setVisible(true);
+                    pack();
+                } else if (state == ConnectionState.DISCONNECTED) {
+                    chatPanel.clear();
+                    chatPanel.setVisible(false);
+                    pack();
+                }
             }
-
-            @Override
-            public void onDisconnected() {
-                chatPanel.clear();
-                chatPanel.setVisible(false);
-                pack();
-            }
-            
         });
         
         

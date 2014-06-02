@@ -18,6 +18,8 @@
 package tetris.net;
 
 import com.google.common.base.Function;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.util.ArrayList;
@@ -31,6 +33,12 @@ import tetris.util.MyThread;
  * @author Arthur D'Andréa Alemar
  */
 public abstract class Network {
+    public enum ConnectionState {
+        DISCONNECTED,
+        CONNECTING,
+        CONNECTED
+    }
+
     protected static final String UNAVAILABLE = "to jogando po";
     protected static final String HELLO = "mamao";
     protected static final String delimitadorChat = "CHAT :";
@@ -42,14 +50,17 @@ public abstract class Network {
     protected final MyThread serverThread;
     protected final MyThread readThread;
     private final List<MessageReciever> messageRecievers;
-    private final ArrayList<ConnectionListener> connectionListeners;
-    
+    private final PropertyChangeSupport propertyChangeSupport;
+    private ConnectionState connectionState;
+    private String connectionError;
+
     public Network(TetrisEngine local, TetrisEngine remote) {
+        this.connectionState = ConnectionState.DISCONNECTED;
         this.protocol = Protocol.create();
         this.localEngine = local;
         this.remoteEngine = remote;
         this.messageRecievers = new ArrayList<>();
-        this.connectionListeners = new ArrayList<>();
+        this.propertyChangeSupport = new PropertyChangeSupport(this);
         this.localEngine.addMoveListener(new TetrisMoveListener() {
             @Override
             public void sucessfulMove(TetrisEngine.MoveResult move) {
@@ -72,25 +83,62 @@ public abstract class Network {
         }, "Network Read Thread");
     }
 
+    public final ConnectionState getConnectionState() {
+        return this.connectionState;
+    }
+    
+    public final String getConnectionError() {
+        return this.connectionError;
+    }
+
+    public final void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+
+    public final void addPropertyChangeListener(String propertyName, PropertyChangeListener propertyChangeListener) {
+        propertyChangeSupport.addPropertyChangeListener(propertyName, propertyChangeListener);
+    }
+
+    public final void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
+    public final void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
+    }
+
     public synchronized void addMessageReciever(MessageReciever reciever) {
         this.messageRecievers.add(reciever);
     }
+    
+    protected void onConnecting() {
+        assert this.connectionState == ConnectionState.DISCONNECTED;
+        this.connectionState = ConnectionState.CONNECTING;
+        this.connectionError = null;
+        this.propertyChangeSupport.firePropertyChange("connectionState", ConnectionState.DISCONNECTED, ConnectionState.CONNECTING);
+    }
 
-    public void addConnectionListener(ConnectionListener connectionListener) {
-        this.connectionListeners.add(connectionListener);
+    protected void onConnectionError(String error) {
+        assert this.connectionState == ConnectionState.CONNECTING;
+        this.connectionState = ConnectionState.DISCONNECTED;
+        this.connectionError = error;
+        this.propertyChangeSupport.firePropertyChange("connectionState", ConnectionState.CONNECTING, ConnectionState.DISCONNECTED);
     }
 
     protected void onConnected() {
-        for (ConnectionListener connectionListener : this.connectionListeners) {
-            connectionListener.onConnected();
-        }
+        assert this.connectionState == ConnectionState.CONNECTING;
+        this.connectionState = ConnectionState.CONNECTED;
+        this.connectionError = null;
+        this.propertyChangeSupport.firePropertyChange("connectionState", ConnectionState.CONNECTING, ConnectionState.CONNECTED);
     }
     
     protected void onDisconnected() {
-        for (ConnectionListener connectionListener : this.connectionListeners) {
-            connectionListener.onDisconnected();
-        }        
+        assert this.connectionState == ConnectionState.CONNECTED;
+        this.connectionState = ConnectionState.DISCONNECTED;
+        this.connectionError = null;
+        this.propertyChangeSupport.firePropertyChange("connectionState", ConnectionState.CONNECTED, ConnectionState.DISCONNECTED);
     }
+
     protected void processLinha(String linha) {
         if (linha == null || linha.isEmpty()) return;
         if (linha.startsWith(delimitadorChat)) {
@@ -119,7 +167,6 @@ public abstract class Network {
 
     public abstract boolean connect(InetAddress addr, int port);
     public abstract int getPort();
-    public abstract boolean isConnected();
     public abstract void sendChat(String string);
     public abstract void sendMove(TetrisEngine.MoveResult moveResult);
     public abstract void start();
